@@ -1,31 +1,30 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 // Context
-import { PostProvider } from './contexts1/PostContext';
 import { AuthProvider, useAuth } from './contexts1/AuthContext';
 import { navigationRef } from './contexts1/NavigationService';
+import { PostProvider } from './contexts1/PostContext';
 
 // Screens
-import SignUpScreen from './screens/SignUpScreen';
-import LoginScreen from './screens/LoginScreen';
-import TermsAndPrivacyScreen from './screens/TermsAndPrivacyScreen';
-import EditProfileScreen from './screens/EditProfileScreen';
-import CreateAPostScreen from './screens/CreateAPostScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import ChangePasswordScreen from './screens/ChangePassword';
+import BottomTabNavigator from './screens/BottomTabNavigator';
 import ChangeEmailScreen from './screens/ChangeEmail';
 import ChangeEmailVerificationScreen from './screens/ChangeEmailVerificationScreen';
-import PostPage from './screens/PostPage';
-import BottomTabNavigator from './screens/BottomTabNavigator';
-import VerificationScreen from './screens/VerificationScreen';
-import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
-import ConfirmVerificationScreen from './screens/ConfirmVerificationScreen';
-import ResetPasswordScreen from './screens/ResetPasswordScreen';
-import NewEmailScreen from './screens/NewEmailScreen';
+import ChangePasswordScreen from './screens/ChangePassword';
 import ConfirmNewEmailVerificationScreen from './screens/ConfirmNewEmailVerificationScreen';
+import ConfirmVerificationScreen from './screens/ConfirmVerificationScreen';
+import CreateAPostScreen from './screens/CreateAPostScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import LoginScreen from './screens/LoginScreen';
+import NewEmailScreen from './screens/NewEmailScreen';
+import PostPage from './screens/PostPage';
+import ResetPasswordScreen from './screens/ResetPasswordScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import TermsAndPrivacyScreen from './screens/TermsAndPrivacyScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
+import VerificationScreen from './screens/VerificationScreen';
 
 const Stack = createStackNavigator();
 
