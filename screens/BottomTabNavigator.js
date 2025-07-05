@@ -1,32 +1,30 @@
-import React, { useState, useRef } from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
   Animated,
-  StyleSheet,
   Dimensions,
   Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { navigate } from '../contexts1/NavigationService';
 
 // Screens
 import MyProfileScreen from './MyProfileScreen';
-import SearchScreen from './SearchScreen';
 import SearchStack from './SearchStack';
 import WorldStack from './WorldStack';
 
 // Icons
-import icnWorldGray from '../assets/icn_world_gray.png';
-import icnSearchGray from '../assets/icn_search_gray.png';
-import icnSearchBlue from '../assets/icn_search_blue.png';
 import icnAddBlue from '../assets/icn_add_blue.png';
-import icnChatGray from '../assets/icn_chat_gray.png';
-import icnUserGray from '../assets/icn_user_gray.png';
-import icnUserBlue from '../assets/icn_user_blue.png';
 import icnDiaryBlue from '../assets/icn_diary_blue.png';
+import icnSearchBlue from '../assets/icn_search_blue.png';
+import icnSearchGray from '../assets/icn_search_gray.png';
+import icnUserBlue from '../assets/icn_user_blue.png';
+import icnUserGray from '../assets/icn_user_gray.png';
+import icnWorldGray from '../assets/icn_world_gray.png';
 
 const { height } = Dimensions.get('window');
 const Tab = createBottomTabNavigator();
@@ -134,21 +132,14 @@ const BottomTabNavigator = () => {
           }}
         />
 
+        {/* Placeholder to preserve tab layout and keep AddPost icon centered */}
         <Tab.Screen
-          name="Chat"
-          component={MyProfileScreen}
+          name="Placeholder"
+          component={() => null}
           options={{
             tabBarLabel: '',
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={icnChatGray}
-                style={{
-                  width: 28,
-                  height: 28,
-                  tintColor: focused ? '#007AFF' : '#333',
-                }}
-              />
-            ),
+            tabBarIcon: () => null,
+            tabBarButton: () => null,
           }}
         />
 
@@ -169,6 +160,26 @@ const BottomTabNavigator = () => {
             ),
           }}
         />
+
+        {/*
+        <Tab.Screen
+          name="Chat"
+          component={MyProfileScreen}
+          options={{
+            tabBarLabel: '',
+            tabBarIcon: ({ focused }) => (
+              <Image
+                source={icnChatGray}
+                style={{
+                  width: 28,
+                  height: 28,
+                  tintColor: focused ? '#007AFF' : '#333',
+                }}
+              />
+            ),
+          }}
+        />
+        */}
       </Tab.Navigator>
 
       {/* Modal */}
