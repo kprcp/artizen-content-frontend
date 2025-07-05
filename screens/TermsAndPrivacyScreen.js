@@ -233,7 +233,7 @@ const TermsPrivacyScreen = ({ navigation }) => {
           {/* Accept Button */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.acceptButton} onPress={() => navigation.navigate("SignUpScreen")}>
-              <Text style={styles.acceptButtonText}>I read and understood</Text>
+              <Text style={styles.acceptButtonText}>I Agree and Continue</Text>
             </TouchableOpacity>
           </View>
         </View>
