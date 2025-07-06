@@ -1,5 +1,5 @@
 // WorldStyles.js
-import { StyleSheet, Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -42,7 +42,7 @@ const WorldStyles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#ffffff',
     borderColor: '#ccc',
     borderWidth: 1,
     marginBottom: 20,

@@ -17,6 +17,17 @@ const WorldScreen = ({ navigation }) => {
   const [commentText, setCommentText] = useState("")
   const [hasUnread, setHasUnread] = useState(false) // ✅ New state
 
+  // ✅ Smart API URL detection
+  const getApiUrl = () => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:5001"
+      }
+    }
+    return "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
@@ -58,14 +69,14 @@ const WorldScreen = ({ navigation }) => {
       const refreshData = async () => {
         try {
           const userRes = await fetch(
-            `https://api.artizen.world/api/auth/get-user-by-email?email=${encodeURIComponent(user.email)}`,
+            `${getApiUrl()}/api/auth/get-user-by-email?email=${encodeURIComponent(user.email)}`,
           )
           const userData = await userRes.json()
           if (userRes.ok && userData.user) {
             setUser(userData.user)
           }
 
-          const unreadRes = await fetch(`https://api.artizen.world/api/notifications/unread/${user.email}`)
+          const unreadRes = await fetch(`${getApiUrl()}/api/notifications/unread/${user.email}`)
           const unreadData = await unreadRes.json()
           if (unreadData.success) {
             setHasUnread(unreadData.count > 0)
@@ -109,6 +120,23 @@ const WorldScreen = ({ navigation }) => {
     alert("Reported post: " + id)
   }
 
+  // ✅ Handle delete from 3-dot menu (for user's own posts)
+  const handleDeleteFromMenu = (id) => {
+    setMenuVisibleId(null) // Close menu first
+    confirmDeletePost(id) // Then show confirmation
+  }
+
+  // ✅ Helper function to get the current profile image for any user
+  const getCurrentProfileImage = (postUserEmail) => {
+    // If this post belongs to the current logged-in user, use their latest profile image
+    if (postUserEmail === user?.email) {
+      return user.profileImage
+    }
+    // For other users, we'd need to fetch their latest data, but for now return the cached image
+    // You could enhance this by maintaining a cache of all users' latest profile images
+    return null
+  }
+
   const renderPost = ({ item }) => {
     const isCommentBoxActive = activeCommentBox === item._id
     const userEmail = (user?.email || "").trim().toLowerCase()
@@ -116,14 +144,31 @@ const WorldScreen = ({ navigation }) => {
     const isOwner = userEmail && postEmail && userEmail === postEmail
     const isFollowed = user?.following?.includes(item.userEmail)
 
+    // ✅ Get the current profile image (prioritize live user data over cached post data)
+    const currentProfileImage = getCurrentProfileImage(item.userEmail) || item.profileImage
+
     return (
       <View style={styles.postContainer}>
+        {/* ✅ Show 3-dot menu for user's own posts with Delete option */}
         {isOwner && (
-          <TouchableOpacity style={localStyles.trashButton} onPress={() => confirmDeletePost(item._id)}>
-            <Icon name="trash-2" size={20} color="red" />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={localStyles.threeDotsButton}
+              onPress={() => setMenuVisibleId(menuVisibleId === item._id ? null : item._id)}
+            >
+              <Icon name="more-vertical" size={20} color="#555" />
+            </TouchableOpacity>
+            {menuVisibleId === item._id && (
+              <View style={localStyles.dropdownMenu}>
+                <TouchableOpacity onPress={() => handleDeleteFromMenu(item._id)}>
+                  <Text style={localStyles.deleteText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         )}
 
+        {/* ✅ Show 3-dot menu for followed users' posts with Report option */}
         {!isOwner && isFollowed && (
           <>
             <TouchableOpacity
@@ -142,8 +187,14 @@ const WorldScreen = ({ navigation }) => {
           </>
         )}
 
-        {item.profileImage ? (
-          <Image source={{ uri: item.profileImage }} style={styles.profilePicSquare} resizeMode="cover" />
+        {/* ✅ Use current profile image instead of cached post image */}
+        {currentProfileImage ? (
+          <Image
+            source={{ uri: currentProfileImage }}
+            style={styles.profilePicSquare}
+            resizeMode="cover"
+            key={`${item._id}-${currentProfileImage}`} // ✅ Force re-render when image changes
+          />
         ) : (
           <View style={[styles.profilePicSquare, localStyles.noProfileImageBox]}>
             <Text style={styles.noProfileTextLine}>No</Text>
@@ -152,7 +203,13 @@ const WorldScreen = ({ navigation }) => {
           </View>
         )}
 
-        {item.fullName && <Text style={styles.fullName}>{item.fullName}</Text>}
+        {/* ✅ Use current user's name if it's their post */}
+        {isOwner ? (
+          <Text style={styles.fullName}>{user.fullName}</Text>
+        ) : (
+          item.fullName && <Text style={styles.fullName}>{item.fullName}</Text>
+        )}
+
         <Text style={styles.postTitle}>{item.title}</Text>
         <Text style={styles.postContent}>{item.content}</Text>
 
@@ -224,12 +281,30 @@ const WorldScreen = ({ navigation }) => {
                 <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
                 <Text>{cmt.content}</Text>
                 {(cmt.userEmail === user?.email || item.userEmail === user?.email) && (
-                  <TouchableOpacity
-                    style={{ position: "absolute", top: 6, right: 6 }}
-                    onPress={() => confirmDeleteComment(item._id, idx)}
-                  >
-                    <Icon name="trash" size={16} color="red" />
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={{ position: "absolute", top: 6, right: 6, padding: 2 }}
+                      onPress={() =>
+                        setMenuVisibleId(
+                          menuVisibleId === `comment-${item._id}-${idx}` ? null : `comment-${item._id}-${idx}`,
+                        )
+                      }
+                    >
+                      <Icon name="more-vertical" size={14} color="#555" />
+                    </TouchableOpacity>
+                    {menuVisibleId === `comment-${item._id}-${idx}` && (
+                      <View style={[localStyles.dropdownMenu, { top: 25, right: 6 }]}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMenuVisibleId(null)
+                            confirmDeleteComment(item._id, idx)
+                          }}
+                        >
+                          <Text style={localStyles.deleteText}>Delete</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </>
                 )}
               </View>
             ))}
@@ -274,13 +349,6 @@ const WorldScreen = ({ navigation }) => {
 export default WorldScreen
 
 const localStyles = StyleSheet.create({
-  trashButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    zIndex: 1,
-    padding: 4,
-  },
   threeDotsButton: {
     position: "absolute",
     top: 10,
@@ -306,6 +374,12 @@ const localStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  // ✅ Added delete text style for user's own posts
+  deleteText: {
+    color: "red",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   notificationButton: {
     position: "absolute",
     right: 15,
@@ -319,5 +393,10 @@ const localStyles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "red",
+  },
+  noProfileImageBox: {
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
   },
 })

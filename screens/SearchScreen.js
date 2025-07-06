@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
+import { useAuth } from "../contexts1/AuthContext"
 import { styles as profileStyles } from "../styles/MyProfileStyles"
 
 const { width } = Dimensions.get("window")
@@ -24,6 +25,18 @@ const SearchScreen = () => {
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const navigation = useNavigation()
+  const { user } = useAuth() // ✅ Added to get current user data
+
+  // ✅ Smart API URL detection
+  const getApiUrl = () => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:5001"
+      }
+    }
+    return "https://api.artizen.world"
+  }
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -69,9 +82,7 @@ const SearchScreen = () => {
     setHasSearched(true)
 
     try {
-      const response = await fetch(
-        `https://api.artizen.world/api/auth/search-users?q=${encodeURIComponent(searchText.trim())}`,
-      )
+      const response = await fetch(`${getApiUrl()}/api/auth/search-users?q=${encodeURIComponent(searchText.trim())}`)
       const data = await response.json()
 
       if (response.ok) {
@@ -87,23 +98,43 @@ const SearchScreen = () => {
     }
   }
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("UserProfileScreen", { user: item })}>
-      {item.profileImage ? (
-        <Image source={{ uri: item.profileImage }} style={styles.cardImage} resizeMode="cover" />
-      ) : (
-        <View style={styles.noPicContainer}>
-          <Text style={styles.noPicText}>
-            No{"\n"}Profile{"\n"}Pic
-          </Text>
+  // ✅ Helper function to get the current profile image for any user
+  const getCurrentProfileImage = (itemEmail) => {
+    // If this search result is the current logged-in user, use their latest profile image
+    if (itemEmail === user?.email) {
+      return user.profileImage
+    }
+    // For other users, return their cached image from search results
+    return null
+  }
+
+  const renderItem = ({ item }) => {
+    // ✅ Get the current profile image (prioritize live user data over cached search data)
+    const currentProfileImage = getCurrentProfileImage(item.email) || item.profileImage
+
+    return (
+      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("UserProfileScreen", { user: item })}>
+        {currentProfileImage ? (
+          <Image
+            source={{ uri: currentProfileImage }}
+            style={styles.cardImage}
+            resizeMode="cover"
+            key={`${item.email}-${currentProfileImage}`} // ✅ Force re-render when image changes
+          />
+        ) : (
+          <View style={styles.noPicContainer}>
+            <Text style={styles.noPicText}>
+              No{"\n"}Profile{"\n"}Pic
+            </Text>
+          </View>
+        )}
+        <View style={styles.cardText}>
+          <Text style={styles.fullName}>{item.fullName}</Text>
+          {item.bio ? <Text style={styles.bio}>{item.bio}</Text> : null}
         </View>
-      )}
-      <View style={styles.cardText}>
-        <Text style={styles.fullName}>{item.fullName}</Text>
-        {item.bio ? <Text style={styles.bio}>{item.bio}</Text> : null}
-      </View>
-    </TouchableOpacity>
-  )
+      </TouchableOpacity>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>

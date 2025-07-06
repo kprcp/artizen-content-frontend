@@ -31,6 +31,7 @@ const MyProfileScreen = ({ navigation }) => {
   const [commentText, setCommentText] = useState("")
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
+  const [menuVisibleId, setMenuVisibleId] = useState(null) // ✅ Added for 3-dot menu
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -114,6 +115,7 @@ const MyProfileScreen = ({ navigation }) => {
       } else {
         console.log("✅ Profile image updated on server")
         setUser((prev) => ({ ...prev, profileImage: base64Uri }))
+        Alert.alert("Success", "✅ Your profile picture has been updated!")
       }
     } catch (err) {
       console.error("Image upload error:", err)
@@ -122,25 +124,90 @@ const MyProfileScreen = ({ navigation }) => {
   }
 
   const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== "granted") {
-      alert("Permission to access media library is required!")
+    // ✅ Check if we're in a web environment
+    if (typeof window !== "undefined" && window.document) {
+      // Web environment - use HTML input
+      const input = document.createElement("input")
+      input.type = "file"
+      input.accept = "image/jpeg,image/jpg,image/png"
+
+      input.onchange = (event) => {
+        const file = event.target.files[0]
+        if (!file) return
+
+        // Validate file type
+        if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+          Alert.alert("Error", "❌ Invalid format. Please upload a JPG or PNG image.")
+          return
+        }
+
+        // Create image to check dimensions
+        const img = new Image()
+        img.onload = () => {
+          if (img.width < 200 || img.height < 200) {
+            Alert.alert("Error", "❌ Image too small. Please select an image that is at least 200x200 pixels.")
+            return
+          }
+
+          // Convert to base64
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            const base64 = e.target.result
+            setImageUri(base64)
+            uploadProfileImage(base64)
+          }
+          reader.readAsDataURL(file)
+        }
+        img.src = URL.createObjectURL(file)
+      }
+
+      input.click()
       return
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    })
+    // Mobile environment - use ImagePicker
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== "granted") {
+        alert("Permission to access media library is required!")
+        return
+      }
 
-    if (!result.canceled) {
-      const asset = result.assets[0]
-      const dataUri = `data:image/jpeg;base64,${asset.base64}`
-      setImageUri(dataUri)
-      uploadProfileImage(dataUri)
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      })
+
+      if (!result.canceled) {
+        const asset = result.assets[0]
+        const uri = asset.uri || ""
+        const base64 = asset.base64 || ""
+        const { width, height } = asset
+
+        const isJPG = uri.match(/\.(jpe?g)$/i)
+        const isPNG = uri.match(/\.png$/i)
+
+        if (!isJPG && !isPNG) {
+          alert("❌ Invalid format. Please upload a JPG or PNG image.")
+          return
+        }
+
+        if (width < 200 || height < 200) {
+          Alert.alert("Error", "❌ Image too small. Please select an image that is at least 200x200 pixels.")
+          return
+        }
+
+        const fileType = isPNG ? "png" : "jpeg"
+        const dataUri = `data:image/${fileType};base64,${base64}`
+        setImageUri(dataUri)
+        uploadProfileImage(dataUri)
+      }
+    } catch (error) {
+      console.error("ImagePicker error:", error)
+      alert("❌ Error accessing image picker. Please try again.")
     }
   }
 
@@ -168,13 +235,33 @@ const MyProfileScreen = ({ navigation }) => {
     }
   }
 
+  // ✅ Handle delete from 3-dot menu
+  const handleDeleteFromMenu = (id) => {
+    setMenuVisibleId(null) // Close menu first
+    confirmDelete(id) // Then show confirmation
+  }
+
   const renderPost = ({ item }) => {
     const isCommentBoxActive = activeCommentBox === item._id
     return (
       <View style={[postStyles.postContainer, { width: width / 2 - 30 }]}>
-        <TouchableOpacity style={postStyles.trashButton} onPress={() => confirmDelete(item._id || item.id)}>
-          <Icon name="trash-2" size={20} color="red" />
+        {/* ✅ Replaced trash button with 3-dot menu */}
+        <TouchableOpacity
+          style={postStyles.threeDotsButton}
+          onPress={() => setMenuVisibleId(menuVisibleId === item._id ? null : item._id)}
+        >
+          <Icon name="more-vertical" size={20} color="#555" />
         </TouchableOpacity>
+
+        {/* ✅ Dropdown menu with Delete option */}
+        {menuVisibleId === item._id && (
+          <View style={postStyles.dropdownMenu}>
+            <TouchableOpacity onPress={() => handleDeleteFromMenu(item._id || item.id)}>
+              <Text style={postStyles.deleteText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <Text style={postStyles.postTitle}>{item.title}</Text>
         <Text style={postStyles.postContent}>{item.content}</Text>
         <View style={postStyles.iconRow}>
@@ -331,7 +418,7 @@ const postStyles = StyleSheet.create({
     marginHorizontal: 10,
     padding: 15,
     borderRadius: 12,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#ffffff",
     borderColor: "#ccc",
     borderWidth: 1,
     position: "relative",
@@ -359,10 +446,30 @@ const postStyles = StyleSheet.create({
   iconLabel: {
     fontSize: 14,
   },
-  trashButton: {
+  // ✅ Updated styles for 3-dot menu
+  threeDotsButton: {
     position: "absolute",
     top: 10,
     right: 10,
+    zIndex: 1,
     padding: 4,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 35,
+    right: 10,
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    zIndex: 10,
+    elevation: 5,
+  },
+  deleteText: {
+    color: "red",
+    fontSize: 14,
+    fontWeight: "600",
   },
 })

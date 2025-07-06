@@ -16,7 +16,10 @@ export const AuthProvider = ({ children }) => {
         if (storedUser) {
           const userData = JSON.parse(storedUser)
           console.log("👤 Restored user from localStorage:", userData)
+          console.log("🖼️ Restored profileImage:", userData.profileImage ? "✅ Present" : "❌ Missing")
           setUser(userData)
+        } else {
+          console.log("❌ No stored user found in localStorage")
         }
       } catch (error) {
         console.error("❌ Error reading stored auth:", error)
@@ -29,12 +32,15 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  // ✅ Save or remove user in localStorage
+  // ✅ Save or remove user in localStorage with better logging
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (user) {
+        console.log("💾 Saving user to localStorage:", user.email)
+        console.log("🖼️ Saving profileImage:", user.profileImage ? "✅ Present" : "❌ Missing")
         localStorage.setItem("user", JSON.stringify(user))
       } else {
+        console.log("🗑️ Removing user from localStorage")
         localStorage.removeItem("user")
       }
     }
