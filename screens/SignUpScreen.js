@@ -1,4 +1,5 @@
 import { Picker } from '@react-native-picker/picker';
+import { Head } from 'expo-head'; // ✅ Added expo-head import
 import { useEffect, useState } from 'react';
 import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../styles/SignUpStyles';
@@ -15,7 +16,7 @@ const SignUpScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ✅ ONLY CHANGE: Set page title for web
+  // ✅ Keep the useEffect as backup
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.title = 'Artizen';
@@ -89,108 +90,115 @@ const SignUpScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Image
-          source={require('../assets/logo_artizen.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-
-      <Text style={styles.title}>Welcome to <Text style={{ color: '#007bff' }}>Artizen</Text></Text>
-      <Text style={styles.subTitle}>Sign up to change your world</Text>
-
-      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-      <Text style={styles.label}>Full Name <Text style={styles.mandatory}>*</Text></Text>
-      <TextInput style={styles.input} placeholder="Enter your Full Name" value={fullName} onChangeText={setFullName} />
-
-      <Text style={styles.label}>Email Address <Text style={styles.mandatory}>*</Text></Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-
-      <Text style={styles.label}>Date of Birth <Text style={styles.mandatory}>*</Text></Text>
-      <View style={styles.dobContainer}>
-        <View style={styles.pickerContainer}>
-          <Picker selectedValue={month} onValueChange={setMonth} style={styles.picker}>
-            <Picker.Item label="MM" value="" />
-            {months.map((monthName, index) => (
-              <Picker.Item key={index + 1} label={monthName} value={`${index + 1}`} />
-            ))}
-          </Picker>
+    <>
+      {/* ✅ Added Head component for persistent title */}
+      <Head>
+        <title>Artizen</title>
+      </Head>
+      
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Image
+            source={require('../assets/logo_artizen.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
-        <View style={styles.pickerContainer}>
-          <Picker selectedValue={day} onValueChange={setDay} style={styles.picker}>
-            <Picker.Item label="DD" value="" />
-            {days.map((d) => (
-              <Picker.Item key={d} label={d} value={d} />
-            ))}
-          </Picker>
-        </View>
+        <Text style={styles.title}>Welcome to <Text style={{ color: '#007bff' }}>Artizen</Text></Text>
+        <Text style={styles.subTitle}>Sign up to change your world</Text>
 
-        <View style={styles.pickerContainer}>
-          <Picker selectedValue={year} onValueChange={setYear} style={styles.picker}>
-            <Picker.Item label="YYYY" value="" />
-            {years.map((yr) => (
-              <Picker.Item key={yr} label={yr} value={yr} />
-            ))}
-          </Picker>
-        </View>
-      </View>
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-      <Text style={styles.label}>Password <Text style={styles.mandatory}>*</Text></Text>
-      <View style={styles.passwordContainer}>
+        <Text style={styles.label}>Full Name <Text style={styles.mandatory}>*</Text></Text>
+        <TextInput style={styles.input} placeholder="Enter your Full Name" value={fullName} onChangeText={setFullName} />
+
+        <Text style={styles.label}>Email Address <Text style={styles.mandatory}>*</Text></Text>
         <TextInput
-          style={styles.passwordInput}
-          placeholder="Create your password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
+          style={styles.input}
+          placeholder="Enter your Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Image source={require('../assets/icn_show.png')} style={styles.eyeIcon} resizeMode="contain" />
-        </TouchableOpacity>
-      </View>
 
-      <Text style={styles.label}>Confirm Password <Text style={styles.mandatory}>*</Text></Text>
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirmPassword}
-        />
-        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <Image source={require('../assets/icn_show.png')} style={styles.eyeIcon} resizeMode="contain" />
-        </TouchableOpacity>
-      </View>
+        <Text style={styles.label}>Date of Birth <Text style={styles.mandatory}>*</Text></Text>
+        <View style={styles.dobContainer}>
+          <View style={styles.pickerContainer}>
+            <Picker selectedValue={month} onValueChange={setMonth} style={styles.picker}>
+              <Picker.Item label="MM" value="" />
+              {months.map((monthName, index) => (
+                <Picker.Item key={index + 1} label={monthName} value={`${index + 1}`} />
+              ))}
+            </Picker>
+          </View>
 
-      <Text style={styles.termsText}>
-        By clicking Sign Up, you agree to our{' '}
-        <TouchableOpacity onPress={() => navigation.navigate('TermsAndPrivacyScreen')}>
-          <Text style={styles.termsLink}>Terms and Privacy Policy</Text>
-        </TouchableOpacity>
-      </Text>
+          <View style={styles.pickerContainer}>
+            <Picker selectedValue={day} onValueChange={setDay} style={styles.picker}>
+              <Picker.Item label="DD" value="" />
+              {days.map((d) => (
+                <Picker.Item key={d} label={d} value={d} />
+              ))}
+            </Picker>
+          </View>
 
-      <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-        <Text style={styles.signUpButtonText}>Sign Up</Text>
-      </TouchableOpacity>
+          <View style={styles.pickerContainer}>
+            <Picker selectedValue={year} onValueChange={setYear} style={styles.picker}>
+              <Picker.Item label="YYYY" value="" />
+              {years.map((yr) => (
+                <Picker.Item key={yr} label={yr} value={yr} />
+              ))}
+            </Picker>
+          </View>
+        </View>
 
-      <Text style={styles.loginText}>
-        Already have an account?
-        <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
-          <Text style={styles.loginLink}> Log in</Text>
+        <Text style={styles.label}>Password <Text style={styles.mandatory}>*</Text></Text>
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Create your password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Image source={require('../assets/icn_show.png')} style={styles.eyeIcon} resizeMode="contain" />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.label}>Confirm Password <Text style={styles.mandatory}>*</Text></Text>
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+          />
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <Image source={require('../assets/icn_show.png')} style={styles.eyeIcon} resizeMode="contain" />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.termsText}>
+          By clicking Sign Up, you agree to our{' '}
+          <TouchableOpacity onPress={() => navigation.navigate('TermsAndPrivacyScreen')}>
+            <Text style={styles.termsLink}>Terms and Privacy Policy</Text>
+          </TouchableOpacity>
+        </Text>
+
+        <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+          <Text style={styles.signUpButtonText}>Sign Up</Text>
         </TouchableOpacity>
-      </Text>
-    </SafeAreaView>
+
+        <Text style={styles.loginText}>
+          Already have an account?
+          <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
+            <Text style={styles.loginLink}> Log in</Text>
+          </TouchableOpacity>
+        </Text>
+      </SafeAreaView>
+    </>
   );
 };
 
