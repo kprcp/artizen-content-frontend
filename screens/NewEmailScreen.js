@@ -1,6 +1,6 @@
 // screens/NewEmailScreen.js
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { newEmailStyles as styles } from '../styles/NewEmailStyles';
 
 const NewEmailScreen = ({ navigation, route }) => {
@@ -29,7 +29,7 @@ const NewEmailScreen = ({ navigation, route }) => {
 
     try {
       // Request a code to the new email for confirmation
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/request-new-email-verification', {
+      const response = await fetch('https://api.artizen.world/api/auth/request-new-email-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldEmail, newEmail: trimmedNewEmail }),

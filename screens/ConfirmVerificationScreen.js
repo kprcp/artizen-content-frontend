@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { confirmStyles as styles } from '../styles/ConfirmVerificationStyles';
 
 const ConfirmVerificationScreen = ({ navigation, route }) => {
@@ -18,7 +18,7 @@ const ConfirmVerificationScreen = ({ navigation, route }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/confirm-reset-code', {
+      const response = await fetch('https://api.artizen.world/api/auth/confirm-reset-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),

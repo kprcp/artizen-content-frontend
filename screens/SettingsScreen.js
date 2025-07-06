@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Image, Text, TextInput, TouchableOpacity, Switch } from 'react-native';
-import SettingsStyle from '../styles/SettingsStyle';
+import { useState } from 'react';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts1/AuthContext'; // ✅ added
+import SettingsStyle from '../styles/SettingsStyle';
 
 const SettingsScreen = ({ navigation }) => {
   const [accountPrivate, setIsPrivate] = useState(false);
@@ -37,7 +37,7 @@ const SettingsScreen = ({ navigation }) => {
   if (!confirmed) return;
 
   try {
-    const res = await fetch('https://artizen-backend.onrender.com/api/auth/delete-account', {
+    const res = await fetch('https://api.artizen.world/api/auth/delete-account', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: user.email }) // ✅ email from user context

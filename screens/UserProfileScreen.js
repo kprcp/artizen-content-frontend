@@ -1,21 +1,21 @@
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
-  TextInput,
-  Dimensions,
+    Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import styles from '../styles/UserProfileStyles';
-import { usePostContext } from '../contexts1/PostContext';
 import { useAuth } from '../contexts1/AuthContext';
-import { useFocusEffect } from '@react-navigation/native';
+import { usePostContext } from '../contexts1/PostContext';
+import styles from '../styles/UserProfileStyles';
 
 const { width } = Dimensions.get('window');
 
@@ -50,7 +50,7 @@ const UserProfileScreen = ({ route, navigation }) => {
 
   const fetchFollowCounts = async (email) => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/auth/user-follow-counts?email=${email}`);
+      const res = await fetch(`https://api.artizen.world/api/auth/user-follow-counts?email=${email}`);
       const data = await res.json();
       setFollowerCount(data.followerCount);
       setFollowingCount(data.followingCount);
@@ -61,7 +61,7 @@ const UserProfileScreen = ({ route, navigation }) => {
 
   const checkFollowStatus = async (email) => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/auth/check-follow?followerId=${currentUser.email}&followingId=${email}`);
+      const res = await fetch(`https://api.artizen.world/api/auth/check-follow?followerId=${currentUser.email}&followingId=${email}`);
       const data = await res.json();
       setIsFollowing(data.following);
     } catch (err) {
@@ -71,7 +71,7 @@ const UserProfileScreen = ({ route, navigation }) => {
 
   const refreshCurrentUser = async () => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/auth/get-user-by-email?email=${currentUser.email}`);
+      const res = await fetch(`https://api.artizen.world/api/auth/get-user-by-email?email=${currentUser.email}`);
       const data = await res.json();
       if (res.ok && data.user) {
         const followingUsers = data.user.followings || [];
@@ -89,7 +89,7 @@ const UserProfileScreen = ({ route, navigation }) => {
 
   const toggleFollow = async () => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/auth/toggle-follow`, {
+      const res = await fetch(`https://api.artizen.world/api/auth/toggle-follow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

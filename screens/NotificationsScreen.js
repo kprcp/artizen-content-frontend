@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList } from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../contexts1/AuthContext';
 import NotificationStyles from '../styles/NotificationsStyles';
 import SettingsStyle from '../styles/SettingsStyle'; // use the same header styles
-import { useAuth } from '../contexts1/AuthContext';
 
 const NotificationsScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ const NotificationsScreen = ({ navigation }) => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await fetch(`https://artizen-backend.onrender.com/api/notifications/${user.email}`);
+        const res = await fetch(`https://api.artizen.world/api/notifications/${user.email}`);
         const data = await res.json();
 
         if (data.success) {

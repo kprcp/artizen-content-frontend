@@ -1,17 +1,29 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // ✅ Added loading state
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Always clear user from localStorage and start from SignUp
+  // ✅ FIXED: Check for saved user data on app startup (instead of clearing it)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('user');
-      setUser(null);
-      setLoading(false); // ✅ Done loading
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          console.log('👤 Restored user from localStorage:', userData);
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('❌ Error reading stored auth:', error);
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -29,12 +41,12 @@ export const AuthProvider = ({ children }) => {
   // ✅ Optional: log user when updated (for debug)
   useEffect(() => {
     if (user) {
-      console.log('👤 AuthContext user set:', user); // Check if profileImage is present
+      console.log('👤 AuthContext user set:', user);
     }
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}> {/* ✅ Added loading to context */}
+    <AuthContext.Provider value={{ user, setUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

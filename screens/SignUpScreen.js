@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { useState } from 'react';
+import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../styles/SignUpStyles';
-import { SafeAreaView } from 'react-native';
 
 const SignUpScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
@@ -61,7 +60,7 @@ const SignUpScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/signup', {
+      const response = await fetch('https://api.artizen.world/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

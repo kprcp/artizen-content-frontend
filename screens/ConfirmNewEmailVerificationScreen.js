@@ -1,6 +1,6 @@
 // screens/ConfirmNewEmailVerificationScreen.js
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import styles from '../styles/ConfirmNewEmailVerificationStyles';
 
 const ConfirmNewEmailVerificationScreen = ({ navigation, route }) => {
@@ -19,7 +19,7 @@ const ConfirmNewEmailVerificationScreen = ({ navigation, route }) => {
     setError('');
 
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/confirm-new-email-verification', {
+      const response = await fetch('https://api.artizen.world/api/auth/confirm-new-email-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldEmail, newEmail, code }),

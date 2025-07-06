@@ -1,64 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity } from 'react-native';
-import Modal from 'react-modal';
-import { styles } from '../styles/CreateAPostStyles';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+// import Modal from 'react-modal'; // Commented out for MVP
 import { useAuth } from '../contexts1/AuthContext';
+import { styles } from '../styles/CreateAPostStyles';
 
-Modal.setAppElement('#root');
+// Modal.setAppElement('#root'); // Commented out for MVP
 
 const CreateAPostScreen = ({ navigation }) => {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-
+  // const today = new Date(); // Commented out for MVP
+  // const currentYear = today.getFullYear(); // Commented out for MVP
   const { user: currentUser } = useAuth();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [month, setMonth] = useState(today.getMonth());
-  const [day, setDay] = useState(today.getDate());
-  const [year, setYear] = useState(today.getFullYear());
-  const [hour, setHour] = useState('12');
-  const [minute, setMinute] = useState('00');
-  const [ampm, setAmpm] = useState('AM');
+  
+  // Date/Time selection state - Commented out for MVP
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [selectedDate, setSelectedDate] = useState(null);
+  // const [month, setMonth] = useState(today.getMonth());
+  // const [day, setDay] = useState(today.getDate());
+  // const [year, setYear] = useState(today.getFullYear());
+  // const [hour, setHour] = useState('12');
+  // const [minute, setMinute] = useState('00');
+  // const [ampm, setAmpm] = useState('AM');
 
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const years = Array.from({ length: 20 }, (_, i) => currentYear + i);
-  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+  // Date/Time helper arrays and functions - Commented out for MVP
+  // const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // const years = Array.from({ length: 20 }, (_, i) => currentYear + i);
+  // const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  // const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
-  const getDaysInMonth = (month, year) => new Date(year, typeof month === 'string' ? months.indexOf(month) + 1 : month + 1, 0).getDate();
-  const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => String(i + 1).padStart(2, '0'));
+  // const getDaysInMonth = (month, year) => new Date(year, typeof month === 'string' ? months.indexOf(month) + 1 : month + 1, 0).getDate();
+  // const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => String(i + 1).padStart(2, '0'));
 
-  const handleConfirm = () => {
-    let finalHour = parseInt(hour);
-    if (ampm === 'PM' && finalHour !== 12) finalHour += 12;
-    if (ampm === 'AM' && finalHour === 12) finalHour = 0;
-    const finalDate = new Date(year, months.indexOf(month), parseInt(day), finalHour, parseInt(minute));
-    setSelectedDate(finalDate);
-    setIsModalOpen(false);
-  };
+  // const handleConfirm = () => {
+  //   let finalHour = parseInt(hour);
+  //   if (ampm === 'PM' && finalHour !== 12) finalHour += 12;
+  //   if (ampm === 'AM' && finalHour === 12) finalHour = 0;
+  //   const finalDate = new Date(year, months.indexOf(month), parseInt(day), finalHour, parseInt(minute));
+  //   setSelectedDate(finalDate);
+  //   setIsModalOpen(false);
+  // };
 
-  useEffect(() => {
-    const maxDay = getDaysInMonth(month, year);
-    if (parseInt(day) > maxDay) {
-      setDay(String(maxDay).padStart(2, '0'));
-    }
-  }, [month, year]);
+  // useEffect(() => {
+  //   const maxDay = getDaysInMonth(month, year);
+  //   if (parseInt(day) > maxDay) {
+  //     setDay(String(maxDay).padStart(2, '0'));
+  //   }
+  // }, [month, year]);
 
-  const formatDateTime = (date) => {
-    if (!date) return 'Now';
-    const formattedMonth = months[date.getMonth()];
-    const day = date.getDate();
-    const year = date.getFullYear();
-    let hour = date.getHours();
-    const minute = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    hour = hour % 12;
-    hour = hour ? hour : 12;
-    return `${formattedMonth} ${day}, ${year}, ${hour}:${minute} ${ampm}`;
-  };
+  // const formatDateTime = (date) => {
+  //   if (!date) return 'Now';
+  //   const formattedMonth = months[date.getMonth()];
+  //   const day = date.getDate();
+  //   const year = date.getFullYear();
+  //   let hour = date.getHours();
+  //   const minute = date.getMinutes().toString().padStart(2, '0');
+  //   const ampm = hour >= 12 ? 'PM' : 'AM';
+  //   hour = hour % 12;
+  //   hour = hour ? hour : 12;
+  //   return `${formattedMonth} ${day}, ${year}, ${hour}:${minute} ${ampm}`;
+  // };
 
   return (
     <View style={styles.container}>
@@ -73,7 +75,6 @@ const CreateAPostScreen = ({ navigation }) => {
 
       <View style={styles.profileTextContainer}>
         <Text style={styles.profileName}>Create a New Post</Text>
-
         <TextInput
           style={styles.input}
           placeholder="Title"
@@ -81,7 +82,6 @@ const CreateAPostScreen = ({ navigation }) => {
           value={title}
           onChangeText={setTitle}
         />
-
         <TextInput
           style={styles.bigInput}
           placeholder="Write A Post..."
@@ -92,12 +92,13 @@ const CreateAPostScreen = ({ navigation }) => {
           maxLength={500}
         />
 
-        <View style={styles.dateTimeBox}>
+        {/* Date/Time selection UI - Commented out for MVP */}
+        {/* <View style={styles.dateTimeBox}>
           <Text style={styles.nowText}>{formatDateTime(selectedDate)}</Text>
           <TouchableOpacity onPress={() => setIsModalOpen(true)}>
             <Image source={require('../assets/icn_calender.png')} style={styles.calendarIcon} />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <TouchableOpacity
           style={styles.updateButton}
@@ -110,14 +111,14 @@ const CreateAPostScreen = ({ navigation }) => {
             const postBody = {
               title,
               content,
-              date: selectedDate || new Date(),
+              date: new Date(), // Always use current date/time for MVP
               userEmail: currentUser.email,
               fullName: currentUser.fullName,
               profileImage: currentUser.profileImage,
             };
 
             try {
-              const res = await fetch('https://artizen-backend.onrender.com/api/posts', {
+              const res = await fetch('https://api.artizen.world/api/posts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postBody),
@@ -144,7 +145,8 @@ const CreateAPostScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <Modal
+      {/* Date/Time selection Modal - Commented out for MVP */}
+      {/* <Modal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         style={{
@@ -210,7 +212,7 @@ const CreateAPostScreen = ({ navigation }) => {
         </View>
 
         <button onClick={handleConfirm} style={styles.confirmButton}>Select</button>
-      </Modal>
+      </Modal> */}
     </View>
   );
 };

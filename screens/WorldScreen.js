@@ -1,21 +1,21 @@
 // WorldScreen.js
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  TextInput,
   Alert,
+  FlatList,
+  Image,
   Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import styles from '../styles/WorldStyles';
-import { usePostContext } from '../contexts1/PostContext';
 import { useAuth } from '../contexts1/AuthContext';
-import { useFocusEffect } from '@react-navigation/native';
+import { usePostContext } from '../contexts1/PostContext';
+import styles from '../styles/WorldStyles';
 
 const WorldScreen = ({ navigation }) => {
   const { posts, toggleLike, addComment, deleteComment, deletePost, fetchPosts } = usePostContext();
@@ -30,14 +30,14 @@ const WorldScreen = ({ navigation }) => {
       const refreshData = async () => {
         try {
           const userRes = await fetch(
-            `https://artizen-backend.onrender.com/api/auth/get-user-by-email?email=${encodeURIComponent(user.email)}`
+            `https://api.artizen.world/api/auth/get-user-by-email?email=${encodeURIComponent(user.email)}`
           );
           const userData = await userRes.json();
 
           if (userRes.ok && userData.user) {
             setUser(userData.user);
           }
-          const unreadRes = await fetch(`https://artizen-backend.onrender.com/api/notifications/unread/${user.email}`);
+          const unreadRes = await fetch(`https://api.artizen.world/api/notifications/unread/${user.email}`);
           const unreadData = await unreadRes.json();
           if (unreadData.success) {
             setHasUnread(unreadData.count > 0);

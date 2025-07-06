@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import {
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  FlatList,
-  Dimensions,
-  Alert,
-  SafeAreaView,
-} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useState } from 'react';
+import {
+    Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { styles as profileStyles } from '../styles/MyProfileStyles';
 
 const { width } = Dimensions.get('window');
@@ -31,7 +31,7 @@ const SearchScreen = () => {
     setHasSearched(true);
 
     try {
-      const response = await fetch(`https://artizen-backend.onrender.com/api/auth/search-users?q=${encodeURIComponent(searchText.trim())}`);
+      const response = await fetch(`https://api.artizen.world/api/auth/search-users?q=${encodeURIComponent(searchText.trim())}`);
       const data = await response.json();
 
       if (response.ok) {

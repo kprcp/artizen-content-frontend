@@ -1,5 +1,5 @@
 // PostContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext'; // ✅ Import to get current user
 
 const PostContext = createContext();
@@ -28,7 +28,7 @@ export const PostProvider = ({ children }) => {
 
   const fetchPosts = async () => {
     try {
-      const res = await fetch('https://artizen-backend.onrender.com/api/posts/all');
+      const res = await fetch('https://api.artizen.world/api/posts/all');
       const data = await res.json();
       if (Array.isArray(data)) {
         const normalized = data.map(normalizePost);
@@ -44,7 +44,7 @@ export const PostProvider = ({ children }) => {
   const toggleLike = async (id) => {
     if (!user?.email) return;
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/posts/like/${id}`, {
+      const res = await fetch(`https://api.artizen.world/api/posts/like/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userEmail: user.email }),
@@ -64,7 +64,7 @@ export const PostProvider = ({ children }) => {
 
   const deletePost = async (id) => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/posts/${id}`, {
+      const res = await fetch(`https://api.artizen.world/api/posts/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
@@ -79,7 +79,7 @@ export const PostProvider = ({ children }) => {
   const addComment = async (postId, content) => {
     if (!user?.email || !user?.fullName || !content) return;
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/posts/comment/${postId}`, {
+      const res = await fetch(`https://api.artizen.world/api/posts/comment/${postId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,7 +105,7 @@ export const PostProvider = ({ children }) => {
   // ✅ Delete a comment from a post
   const deleteComment = async (postId, commentIndex) => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/posts/comment/${postId}/${commentIndex}`, {
+      const res = await fetch(`https://api.artizen.world/api/posts/comment/${postId}/${commentIndex}`, {
         method: 'DELETE',
       });
 

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Image, Text, TextInput, TouchableOpacity } from 'react-native';
-import styles from '../styles/ChangePasswordStyles';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts1/AuthContext'; // ✅ Use the custom hook
+import styles from '../styles/ChangePasswordStyles';
 
 const ChangePassword = ({ navigation }) => {
   const { user } = useAuth(); // ✅ Get user from AuthContext
@@ -41,7 +41,7 @@ const ChangePassword = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/change-password', {
+      const response = await fetch('https://api.artizen.world/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

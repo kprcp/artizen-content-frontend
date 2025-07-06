@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../contexts1/AuthContext';
 import { styles } from '../styles/LoginStyles';
-import { useAuth } from '../contexts1/AuthContext'; // ✅ Import AuthContext
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,8 +9,8 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const { setUser } = useAuth(); // ✅ Access setUser from context
+  
+  const { setUser, loading: authLoading } = useAuth(); // ✅ Added authLoading
 
   const isValidEmail = (input) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,22 +19,22 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     setLoginError('');
-
+    
     if (!email || !password) {
       setLoginError('⚠️ Please fill in all fields.');
       return;
     }
-
+    
     if (!isValidEmail(email)) {
       setLoginError('⚠️ Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
-
+    
     try {
-      // ✅ CORRECTED: Use the right login endpoint
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/login', {
+      // ✅ UPDATED: Use your custom domain
+      const response = await fetch('https://api.artizen.world/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password })
@@ -44,10 +44,9 @@ const LoginScreen = ({ navigation }) => {
 
       if (response.ok) {
         console.log("✅ Logged in:", data);
-        console.log("👤 Received user object:", data.user); // ✅ Check for profileImage
+        console.log("👤 Received user object:", data.user);
         setLoginError('');
-        setUser(data.user); // ✅ Save user info globally (including profileImage)
-
+        setUser(data.user); // ✅ This will now trigger persistent storage
         navigation.reset({
           index: 0,
           routes: [{ name: 'MainApp' }],
@@ -107,8 +106,14 @@ const LoginScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
-        <Text style={styles.loginButtonText}>{loading ? 'Logging in...' : 'Log In'}</Text>
+      <TouchableOpacity 
+        style={styles.loginButton} 
+        onPress={handleLogin} 
+        disabled={loading || authLoading} // ✅ Updated
+      >
+        <Text style={styles.loginButtonText}>
+          {loading ? 'Logging in...' : 'Log In'}
+        </Text>
       </TouchableOpacity>
 
       <Text style={styles.signUpText}>

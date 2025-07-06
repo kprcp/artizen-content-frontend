@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { forgotStyles as styles } from '../styles/ForgotPasswordStyles';
 
 const ForgotPasswordScreen = ({ navigation }) => {
@@ -26,7 +26,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/forgot-password', {
+      const response = await fetch('https://api.artizen.world/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

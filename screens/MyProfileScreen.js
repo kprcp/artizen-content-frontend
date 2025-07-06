@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Image,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
-  Platform,
-  TextInput,
-  ScrollView,
-  Dimensions,
-} from 'react-native';
-import { styles } from '../styles/MyProfileStyles';
-import Icon from 'react-native-vector-icons/Feather';
-import { usePostContext } from '../contexts1/PostContext';
-import { useAuth } from '../contexts1/AuthContext';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import { useFocusEffect } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
+import {
+    Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import { useAuth } from '../contexts1/AuthContext';
+import { usePostContext } from '../contexts1/PostContext';
+import { styles } from '../styles/MyProfileStyles';
 
 const { width } = Dimensions.get('window');
 
@@ -34,7 +33,7 @@ const MyProfileScreen = ({ navigation }) => {
 
   const fetchCounts = async () => {
     try {
-      const res = await fetch(`https://artizen-backend.onrender.com/api/auth/user-follow-counts?email=${user.email}`);
+      const res = await fetch(`https://api.artizen.world/api/auth/user-follow-counts?email=${user.email}`);
       const data = await res.json();
       if (res.ok) {
         setFollowerCount(data.followerCount || 0);
@@ -62,7 +61,7 @@ const MyProfileScreen = ({ navigation }) => {
 
   const uploadProfileImage = async (base64Uri) => {
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/update-profile-image', {
+      const response = await fetch('https://api.artizen.world/api/auth/update-profile-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

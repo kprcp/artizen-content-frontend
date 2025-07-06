@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Image, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import styles from '../styles/ChangeEmailStyles';
+import { useState } from 'react';
+import { Alert, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts1/AuthContext';
+import styles from '../styles/ChangeEmailStyles';
 
 const ChangeEmail = ({ navigation }) => {
   const { user } = useAuth();
@@ -15,11 +15,11 @@ const ChangeEmail = ({ navigation }) => {
 
     try {
       setLoading(true);
-
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/change-email-request', {
+      
+      const response = await fetch('https://api.artizen.world/api/auth/change-email-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentEmail: user.email })  // 👈 matches backend
+        body: JSON.stringify({ email: user.email }) // ✅ Changed from 'currentEmail' to 'email'
       });
 
       const data = await response.json();
@@ -29,8 +29,7 @@ const ChangeEmail = ({ navigation }) => {
       }
 
       Alert.alert('Verification Sent', 'Check your inbox for a verification code.');
-      navigation.navigate('ChangeEmailVerificationScreen', { email: user.email }); // ✅ updated line
-
+      navigation.navigate('ChangeEmailVerificationScreen', { email: user.email });
     } catch (err) {
       console.error('Email change request error:', err.message);
       Alert.alert('Error', err.message || 'Something went wrong.');
@@ -41,7 +40,6 @@ const ChangeEmail = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -54,7 +52,6 @@ const ChangeEmail = ({ navigation }) => {
             resizeMode="contain"
           />
         </TouchableOpacity>
-
         <View style={styles.logoContainer} pointerEvents="none">
           <Image
             source={require('../assets/logo_artizen.png')}
@@ -64,17 +61,14 @@ const ChangeEmail = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Content */}
       <View style={styles.profileTextContainer}>
         <Text style={styles.profileName}>Change Email</Text>
-
         <Text style={styles.label}>Current Email</Text>
         <TextInput
           style={[styles.input, { backgroundColor: '#f5f5f5' }]}
           value={user?.email || ''}
           editable={false}
         />
-
         <TouchableOpacity
           style={styles.updateButton}
           onPress={handleChangeEmail}

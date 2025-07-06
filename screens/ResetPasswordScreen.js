@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { resetStyles as styles } from '../styles/ResetPasswordStyles';
 
 const ResetPasswordScreen = ({ navigation, route }) => {
@@ -27,7 +27,7 @@ const ResetPasswordScreen = ({ navigation, route }) => {
     setError('');
 
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/reset-password', {
+      const response = await fetch('https://api.artizen.world/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), code, newPassword: password }),

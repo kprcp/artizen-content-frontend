@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Image, Text, TextInput, TouchableOpacity } from 'react-native';
-import { styles } from '../styles/EditProfileStyles';
-import { useAuth } from '../contexts1/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
+import { useEffect, useState } from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../contexts1/AuthContext';
+import { styles } from '../styles/EditProfileStyles';
 
 const EditProfileScreen = ({ navigation }) => {
   const { user, setUser } = useAuth();
@@ -33,7 +33,7 @@ const EditProfileScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('https://artizen-backend.onrender.com/api/auth/update-profile', {
+      const response = await fetch('https://api.artizen.world/api/auth/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -106,7 +106,7 @@ const EditProfileScreen = ({ navigation }) => {
       const dataUri = `data:image/${fileType};base64,${base64}`;
 
       try {
-        const response = await fetch('https://artizen-backend.onrender.com/api/auth/update-profile-image', {
+        const response = await fetch('https://api.artizen.world/api/auth/update-profile-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
