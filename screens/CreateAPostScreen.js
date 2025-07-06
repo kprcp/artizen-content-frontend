@@ -1,19 +1,57 @@
-import { useState } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+"use client"
+
+import { useEffect, useState } from "react"
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native"
 // import Modal from 'react-modal'; // Commented out for MVP
-import { useAuth } from '../contexts1/AuthContext';
-import { styles } from '../styles/CreateAPostStyles';
+import { useAuth } from "../contexts1/AuthContext"
+import { styles } from "../styles/CreateAPostStyles"
 
 // Modal.setAppElement('#root'); // Commented out for MVP
 
 const CreateAPostScreen = ({ navigation }) => {
   // const today = new Date(); // Commented out for MVP
   // const currentYear = today.getFullYear(); // Commented out for MVP
-  const { user: currentUser } = useAuth();
 
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  
+  const { user: currentUser } = useAuth()
+  const [title, setTitle] = useState("")
+  const [content, setContent] = useState("")
+
+  // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
+  useEffect(() => {
+    const setTitle = () => {
+      if (typeof document !== "undefined") {
+        document.title = "Artizen"
+      }
+    }
+
+    // Set immediately
+    setTitle()
+
+    // Set after a small delay to override anything else
+    const timer1 = setTimeout(setTitle, 100)
+    const timer2 = setTimeout(setTitle, 500)
+    const timer3 = setTimeout(setTitle, 1000)
+
+    // Set on focus (when user clicks on tab)
+    const handleFocus = () => setTitle()
+    window.addEventListener?.("focus", handleFocus)
+
+    // Cleanup
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+      window.removeEventListener?.("focus", handleFocus)
+    }
+  }, [])
+
+  // 🔄 Also set title whenever component re-renders
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = "Artizen"
+    }
+  })
+
   // Date/Time selection state - Commented out for MVP
   // const [isModalOpen, setIsModalOpen] = useState(false);
   // const [selectedDate, setSelectedDate] = useState(null);
@@ -66,15 +104,16 @@ const CreateAPostScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Image source={require('../assets/icn_arrow_back.png')} style={styles.backIcon} resizeMode="contain" />
+          <Image source={require("../assets/icn_arrow_back.png")} style={styles.backIcon} resizeMode="contain" />
         </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Image source={require('../assets/logo_artizen.png')} style={styles.logo} resizeMode="contain" />
+          <Image source={require("../assets/logo_artizen.png")} style={styles.logo} resizeMode="contain" />
         </View>
       </View>
 
       <View style={styles.profileTextContainer}>
         <Text style={styles.profileName}>Create a New Post</Text>
+
         <TextInput
           style={styles.input}
           placeholder="Title"
@@ -82,6 +121,7 @@ const CreateAPostScreen = ({ navigation }) => {
           value={title}
           onChangeText={setTitle}
         />
+
         <TextInput
           style={styles.bigInput}
           placeholder="Write A Post..."
@@ -104,8 +144,8 @@ const CreateAPostScreen = ({ navigation }) => {
           style={styles.updateButton}
           onPress={async () => {
             if (!title.trim() || !content.trim()) {
-              alert('Please enter both title and content');
-              return;
+              alert("Please enter both title and content")
+              return
             }
 
             const postBody = {
@@ -115,29 +155,30 @@ const CreateAPostScreen = ({ navigation }) => {
               userEmail: currentUser.email,
               fullName: currentUser.fullName,
               profileImage: currentUser.profileImage,
-            };
+            }
 
             try {
-              const res = await fetch('https://api.artizen.world/api/posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+              const res = await fetch("https://api.artizen.world/api/posts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(postBody),
-              });
+              })
 
-              const data = await res.json();
+              const data = await res.json()
+
               if (res.ok) {
-                navigation.navigate('PostPage', {
+                navigation.navigate("PostPage", {
                   title,
                   content,
                   fullName: currentUser.fullName,
                   profileImage: currentUser.profileImage,
-                });
+                })
               } else {
-                alert(data.message || 'Error creating post.');
+                alert(data.message || "Error creating post.")
               }
             } catch (err) {
-              console.error('Post creation error:', err);
-              alert('Something went wrong.');
+              console.error("Post creation error:", err)
+              alert("Something went wrong.")
             }
           }}
         >
@@ -170,7 +211,6 @@ const CreateAPostScreen = ({ navigation }) => {
         <TouchableOpacity style={{ position: 'absolute', top: 10, right: 15, zIndex: 10 }} onPress={() => setIsModalOpen(false)}>
           <Text style={{ fontSize: 22, fontWeight: 'bold' }}>×</Text>
         </TouchableOpacity>
-
         <Text style={styles.sectionTitle}>Select Date</Text>
         <View style={styles.row}>
           <select value={month} onChange={(e) => setMonth(e.target.value)} style={styles.select}>
@@ -191,7 +231,6 @@ const CreateAPostScreen = ({ navigation }) => {
             ))}
           </select>
         </View>
-
         <Text style={styles.sectionTitle}>Select Time</Text>
         <View style={styles.row}>
           <select value={hour} onChange={(e) => setHour(e.target.value)} style={styles.select}>
@@ -210,11 +249,10 @@ const CreateAPostScreen = ({ navigation }) => {
             <option value="PM">PM</option>
           </select>
         </View>
-
         <button onClick={handleConfirm} style={styles.confirmButton}>Select</button>
       </Modal> */}
     </View>
-  );
-};
+  )
+}
 
-export default CreateAPostScreen;
+export default CreateAPostScreen

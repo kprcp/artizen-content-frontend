@@ -4,6 +4,42 @@ import { useEffect } from "react"
 import { Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 const TermsPrivacyScreen = ({ navigation }) => {
+  // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
+  useEffect(() => {
+    const setTitle = () => {
+      if (typeof document !== "undefined") {
+        document.title = "Artizen"
+      }
+    }
+
+    // Set immediately
+    setTitle()
+
+    // Set after a small delay to override anything else
+    const timer1 = setTimeout(setTitle, 100)
+    const timer2 = setTimeout(setTitle, 500)
+    const timer3 = setTimeout(setTitle, 1000)
+
+    // Set on focus (when user clicks on tab)
+    const handleFocus = () => setTitle()
+    window.addEventListener?.("focus", handleFocus)
+
+    // Cleanup
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+      window.removeEventListener?.("focus", handleFocus)
+    }
+  }, [])
+
+  // 🔄 Also set title whenever component re-renders
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = "Artizen"
+    }
+  })
+
   // Simple CSS fix - only target body/html, not components
   useEffect(() => {
     if (Platform.OS === "web" && typeof document !== "undefined") {
@@ -23,13 +59,11 @@ const TermsPrivacyScreen = ({ navigation }) => {
           padding: 0 !important;
           background-color: white !important;
         }
-        
         #root, #main, .expo-web-container {
           height: 100% !important;
           overflow: auto !important;
           background-color: white !important;
         }
-        
         /* Only fix scroll containers */
         div[data-focusable="true"],
         .rn-scrollview {
@@ -38,7 +72,6 @@ const TermsPrivacyScreen = ({ navigation }) => {
         }
       `
       document.head.appendChild(style)
-
       console.log("Terms screen CSS scroll fix applied!")
     }
   }, [])
@@ -247,7 +280,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-
   // ✅ Header (DO NOT CHANGE) - EXACT ORIGINAL
   header: {
     width: "100%",
@@ -262,13 +294,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
-
   logo: {
     width: 120,
     height: 40,
     resizeMode: "contain",
   },
-
   backButton: {
     position: "absolute",
     left: 15,
@@ -278,34 +308,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 10,
   },
-
   backIcon: {
     width: 24,
     height: 24,
   },
-
   logoContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-
   // ✅ ScrollView
   scrollView: {
     flex: 1,
     backgroundColor: "white",
   },
-
   scrollContent: {
     paddingBottom: 50,
     backgroundColor: "white",
   },
-
   content: {
     padding: 20,
     backgroundColor: "white",
   },
-
   // Content Styles
   title: {
     fontSize: 20,
@@ -315,21 +339,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 26,
   },
-
   effectiveDate: {
     fontSize: 14,
     color: "#6c757d",
     textAlign: "center",
     marginBottom: 5,
   },
-
   contact: {
     fontSize: 14,
     color: "#007bff",
     textAlign: "center",
     marginBottom: 20,
   },
-
   welcomeText: {
     fontSize: 16,
     lineHeight: 24,
@@ -337,7 +358,6 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     fontStyle: "italic",
   },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -345,7 +365,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginTop: 20,
   },
-
   subsectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -353,14 +372,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 15,
   },
-
   bodyText: {
     fontSize: 15,
     lineHeight: 22,
     color: "#6c757d",
     marginBottom: 12,
   },
-
   bulletPoint: {
     fontSize: 15,
     lineHeight: 22,
@@ -368,7 +385,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingLeft: 10,
   },
-
   contactEmail: {
     fontSize: 16,
     color: "#007bff",
@@ -376,13 +392,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
   },
-
   buttonContainer: {
     marginTop: 30,
     alignItems: "center",
     backgroundColor: "white",
   },
-
   acceptButton: {
     backgroundColor: "#007bff",
     width: "100%",
@@ -391,7 +405,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
   },
-
   acceptButtonText: {
     color: "white",
     fontSize: 16,

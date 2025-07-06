@@ -1,55 +1,93 @@
+"use client"
+
 // screens/ConfirmNewEmailVerificationScreen.js
-import { useState } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import styles from '../styles/ConfirmNewEmailVerificationStyles';
+import { useEffect, useState } from "react"
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native"
+import styles from "../styles/ConfirmNewEmailVerificationStyles"
 
 const ConfirmNewEmailVerificationScreen = ({ navigation, route }) => {
-  const { oldEmail, newEmail } = route.params;
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { oldEmail, newEmail } = route.params
+  const [code, setCode] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
+  useEffect(() => {
+    const setTitle = () => {
+      if (typeof document !== "undefined") {
+        document.title = "Artizen"
+      }
+    }
+
+    // Set immediately
+    setTitle()
+
+    // Set after a small delay to override anything else
+    const timer1 = setTimeout(setTitle, 100)
+    const timer2 = setTimeout(setTitle, 500)
+    const timer3 = setTimeout(setTitle, 1000)
+
+    // Set on focus (when user clicks on tab)
+    const handleFocus = () => setTitle()
+    window.addEventListener?.("focus", handleFocus)
+
+    // Cleanup
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+      window.removeEventListener?.("focus", handleFocus)
+    }
+  }, [])
+
+  // 🔄 Also set title whenever component re-renders
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = "Artizen"
+    }
+  })
 
   const handleConfirm = async () => {
     if (!code.trim()) {
-      setError('⚠️ Please enter the verification code.');
-      return;
+      setError("⚠️ Please enter the verification code.")
+      return
     }
 
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError("")
 
     try {
-      const response = await fetch('https://api.artizen.world/api/auth/confirm-new-email-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("https://api.artizen.world/api/auth/confirm-new-email-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldEmail, newEmail, code }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        navigation.navigate('SettingsScreen');
+        navigation.navigate("SettingsScreen")
       } else {
-        setError(`⚠️ ${data.error || 'Invalid or expired code.'}`);
+        setError(`⚠️ ${data.error || "Invalid or expired code."}`)
       }
     } catch (err) {
-      console.error('Verification error:', err);
-      setError('⚠️ Network error. Please try again.');
+      console.error("Verification error:", err)
+      setError("⚠️ Network error. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Image source={require('../assets/icn_arrow_back.png')} style={styles.backIcon} resizeMode="contain" />
+        <Image source={require("../assets/icn_arrow_back.png")} style={styles.backIcon} resizeMode="contain" />
       </TouchableOpacity>
 
       {/* Header */}
       <View style={styles.header}>
-        <Image source={require('../assets/logo_artizen.png')} style={styles.logo} resizeMode="contain" />
+        <Image source={require("../assets/logo_artizen.png")} style={styles.logo} resizeMode="contain" />
       </View>
 
       {/* Title & Subtitle */}
@@ -71,10 +109,10 @@ const ConfirmNewEmailVerificationScreen = ({ navigation, route }) => {
 
       {/* Button */}
       <TouchableOpacity style={styles.button} onPress={handleConfirm} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Verifying...' : 'Confirm'}</Text>
+        <Text style={styles.buttonText}>{loading ? "Verifying..." : "Confirm"}</Text>
       </TouchableOpacity>
     </View>
-  );
-};
+  )
+}
 
-export default ConfirmNewEmailVerificationScreen;
+export default ConfirmNewEmailVerificationScreen
