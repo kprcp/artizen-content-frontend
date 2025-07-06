@@ -23,7 +23,7 @@
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./public/favicon.png",
+      "favicon": "./assets/logo_artizen.png",
       "name": "Artizen"
     }
   }
