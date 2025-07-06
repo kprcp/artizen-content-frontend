@@ -1,5 +1,5 @@
 import { Picker } from '@react-native-picker/picker';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../styles/SignUpStyles';
 
@@ -15,8 +15,14 @@ const SignUpScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const months = [
-    "January", "February", "March", "April", "May", "June",
+  // ✅ ONLY CHANGE: Set page title for web
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = 'Artizen';
+    }
+  }, []);
+
+  const months = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
@@ -47,7 +53,6 @@ const SignUpScreen = ({ navigation }) => {
     const dob = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     const birthDate = new Date(dob);
     const today = new Date();
-
     const age = today.getFullYear() - birthDate.getFullYear();
     const hasBirthdayPassed =
       today.getMonth() > birthDate.getMonth() ||

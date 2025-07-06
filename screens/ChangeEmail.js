@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts1/AuthContext';
 import styles from '../styles/ChangeEmailStyles';
@@ -6,6 +6,13 @@ import styles from '../styles/ChangeEmailStyles';
 const ChangeEmail = ({ navigation }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // ✅ ONLY CHANGE: Set page title for web
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = 'Artizen';
+    }
+  }, []);
 
   const handleChangeEmail = async () => {
     if (!user?.email) {
@@ -15,7 +22,6 @@ const ChangeEmail = ({ navigation }) => {
 
     try {
       setLoading(true);
-      
       const response = await fetch('https://api.artizen.world/api/auth/change-email-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
