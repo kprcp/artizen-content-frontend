@@ -1,9 +1,9 @@
 "use client"
-
 import { useEffect, useState } from "react"
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native"
 // import Modal from 'react-modal'; // Commented out for MVP
 import { useAuth } from "../contexts1/AuthContext"
+import { usePostContext } from "../contexts1/PostContext"; // ✅ Use PostContext
 import { styles } from "../styles/CreateAPostStyles"
 
 // Modal.setAppElement('#root'); // Commented out for MVP
@@ -13,19 +13,10 @@ const CreateAPostScreen = ({ navigation }) => {
   // const currentYear = today.getFullYear(); // Commented out for MVP
 
   const { user: currentUser } = useAuth()
+  const { createPost, currentApiUrl } = usePostContext() // ✅ Get createPost from context
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-
-  // ✅ Smart API URL detection
-  const getApiUrl = () => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname
-      if (hostname === "localhost" || hostname === "127.0.0.1") {
-        return "http://localhost:5001"
-      }
-    }
-    return "https://api.artizen.world"
-  }
+  const [isLoading, setIsLoading] = useState(false) // ✅ Add loading state
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -34,19 +25,15 @@ const CreateAPostScreen = ({ navigation }) => {
         document.title = "Artizen"
       }
     }
-
     // Set immediately
     setTitle()
-
     // Set after a small delay to override anything else
     const timer1 = setTimeout(setTitle, 100)
     const timer2 = setTimeout(setTitle, 500)
     const timer3 = setTimeout(setTitle, 1000)
-
     // Set on focus (when user clicks on tab)
     const handleFocus = () => setTitle()
     window.addEventListener?.("focus", handleFocus)
-
     // Cleanup
     return () => {
       clearTimeout(timer1)
@@ -78,7 +65,6 @@ const CreateAPostScreen = ({ navigation }) => {
   // const years = Array.from({ length: 20 }, (_, i) => currentYear + i);
   // const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
   // const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-
   // const getDaysInMonth = (month, year) => new Date(year, typeof month === 'string' ? months.indexOf(month) + 1 : month + 1, 0).getDate();
   // const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => String(i + 1).padStart(2, '0'));
 
@@ -159,6 +145,8 @@ const CreateAPostScreen = ({ navigation }) => {
               return
             }
 
+            setIsLoading(true) // ✅ Set loading
+
             const postBody = {
               title,
               content,
@@ -169,33 +157,35 @@ const CreateAPostScreen = ({ navigation }) => {
             }
 
             try {
-              console.log("🚀 Creating post with API URL:", getApiUrl())
-              const res = await fetch(`${getApiUrl()}/api/posts`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(postBody),
+              console.log("🚀 Creating post with API URL:", currentApiUrl)
+              // ✅ Use PostContext's createPost instead of direct fetch
+              await createPost(postBody)
+
+              // Clear form
+              setTitle("")
+              setContent("")
+
+              navigation.navigate("PostPage", {
+                title,
+                content,
+                fullName: currentUser.fullName,
+                profileImage: currentUser.profileImage,
               })
-
-              const data = await res.json()
-
-              if (res.ok) {
-                navigation.navigate("PostPage", {
-                  title,
-                  content,
-                  fullName: currentUser.fullName,
-                  profileImage: currentUser.profileImage,
-                })
-              } else {
-                alert(data.message || "Error creating post.")
-              }
             } catch (err) {
               console.error("Post creation error:", err)
               alert("Something went wrong.")
+            } finally {
+              setIsLoading(false) // ✅ Clear loading
             }
           }}
+          disabled={isLoading} // ✅ Disable when loading
         >
-          <Text style={styles.updateButtonText}>Post</Text>
+          <Text style={styles.updateButtonText}>
+            {isLoading ? "Creating..." : "Post"} {/* ✅ Show loading text */}
+          </Text>
         </TouchableOpacity>
+
+        {/* ✅ REMOVED: API indicator text */}
       </View>
 
       {/* Date/Time selection Modal - Commented out for MVP */}
@@ -220,9 +210,13 @@ const CreateAPostScreen = ({ navigation }) => {
           },
         }}
       >
-        <TouchableOpacity style={{ position: 'absolute', top: 10, right: 15, zIndex: 10 }} onPress={() => setIsModalOpen(false)}>
+        <TouchableOpacity
+          style={{ position: 'absolute', top: 10, right: 15, zIndex: 10 }}
+          onPress={() => setIsModalOpen(false)}
+        >
           <Text style={{ fontSize: 22, fontWeight: 'bold' }}>×</Text>
         </TouchableOpacity>
+
         <Text style={styles.sectionTitle}>Select Date</Text>
         <View style={styles.row}>
           <select value={month} onChange={(e) => setMonth(e.target.value)} style={styles.select}>
@@ -243,6 +237,7 @@ const CreateAPostScreen = ({ navigation }) => {
             ))}
           </select>
         </View>
+
         <Text style={styles.sectionTitle}>Select Time</Text>
         <View style={styles.row}>
           <select value={hour} onChange={(e) => setHour(e.target.value)} style={styles.select}>
@@ -261,6 +256,7 @@ const CreateAPostScreen = ({ navigation }) => {
             <option value="PM">PM</option>
           </select>
         </View>
+
         <button onClick={handleConfirm} style={styles.confirmButton}>Select</button>
       </Modal> */}
     </View>
