@@ -16,6 +16,17 @@ const CreateAPostScreen = ({ navigation }) => {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
 
+  // ✅ Smart API URL detection
+  const getApiUrl = () => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:5001"
+      }
+    }
+    return "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
@@ -158,7 +169,8 @@ const CreateAPostScreen = ({ navigation }) => {
             }
 
             try {
-              const res = await fetch("https://api.artizen.world/api/posts", {
+              console.log("🚀 Creating post with API URL:", getApiUrl())
+              const res = await fetch(`${getApiUrl()}/api/posts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(postBody),

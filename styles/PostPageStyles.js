@@ -1,5 +1,5 @@
 // PostPageStyles.js
-import { StyleSheet, Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
     width: width * 0.9,
     padding: 15,
     borderRadius: 12,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#ffffff',
     borderColor: '#ccc',
     borderWidth: 1,
     alignItems: 'center',
