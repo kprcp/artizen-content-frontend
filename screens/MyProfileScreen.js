@@ -1,5 +1,4 @@
 "use client"
-
 import { useFocusEffect } from "@react-navigation/native"
 import * as ImagePicker from "expo-image-picker"
 import React, { useEffect, useState } from "react"
@@ -40,19 +39,15 @@ const MyProfileScreen = ({ navigation }) => {
         document.title = "Artizen"
       }
     }
-
     // Set immediately
     setTitle()
-
     // Set after a small delay to override anything else
     const timer1 = setTimeout(setTitle, 100)
     const timer2 = setTimeout(setTitle, 500)
     const timer3 = setTimeout(setTitle, 1000)
-
     // Set on focus (when user clicks on tab)
     const handleFocus = () => setTitle()
     window.addEventListener?.("focus", handleFocus)
-
     // Cleanup
     return () => {
       clearTimeout(timer1)
@@ -107,9 +102,7 @@ const MyProfileScreen = ({ navigation }) => {
           profileImage: base64Uri,
         }),
       })
-
       const data = await response.json()
-
       if (!response.ok) {
         Alert.alert("Upload Failed", data.error || "Try again.")
       } else {
@@ -130,7 +123,6 @@ const MyProfileScreen = ({ navigation }) => {
       const input = document.createElement("input")
       input.type = "file"
       input.accept = "image/jpeg,image/jpg,image/png"
-
       input.onchange = (event) => {
         const file = event.target.files[0]
         if (!file) return
@@ -160,7 +152,6 @@ const MyProfileScreen = ({ navigation }) => {
         }
         img.src = URL.createObjectURL(file)
       }
-
       input.click()
       return
     }
@@ -202,6 +193,7 @@ const MyProfileScreen = ({ navigation }) => {
 
         const fileType = isPNG ? "png" : "jpeg"
         const dataUri = `data:image/${fileType};base64,${base64}`
+
         setImageUri(dataUri)
         uploadProfileImage(dataUri)
       }
@@ -243,6 +235,7 @@ const MyProfileScreen = ({ navigation }) => {
 
   const renderPost = ({ item }) => {
     const isCommentBoxActive = activeCommentBox === item._id
+
     return (
       <View style={[postStyles.postContainer, { width: width / 2 - 30 }]}>
         {/* ✅ Replaced trash button with 3-dot menu */}
@@ -264,6 +257,7 @@ const MyProfileScreen = ({ navigation }) => {
 
         <Text style={postStyles.postTitle}>{item.title}</Text>
         <Text style={postStyles.postContent}>{item.content}</Text>
+
         <View style={postStyles.iconRow}>
           <TouchableOpacity style={postStyles.iconButton} onPress={() => toggleLike(item.id || item._id)}>
             <Icon name="thumbs-up" size={20} color={item.liked ? "#007AFF" : "#555"} style={{ marginRight: 6 }} />
@@ -271,6 +265,7 @@ const MyProfileScreen = ({ navigation }) => {
               Like{item.likes > 0 ? ` (${item.likes})` : ""}
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={postStyles.iconButton}
             onPress={() => setActiveCommentBox(isCommentBoxActive ? null : item._id)}
@@ -286,6 +281,7 @@ const MyProfileScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         </View>
+
         {isCommentBoxActive && (
           <>
             <View style={postStyles.commentBoxContainer}>
@@ -310,10 +306,12 @@ const MyProfileScreen = ({ navigation }) => {
                 <Text style={{ color: "white" }}>Comment</Text>
               </TouchableOpacity>
             </View>
+
             {item.comments?.map((cmt, idx) => (
               <View key={idx} style={postStyles.commentContainer}>
                 <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
                 <Text>{cmt.content}</Text>
+
                 {(cmt.userEmail === user?.email || item.userEmail === user?.email) && (
                   <>
                     <TouchableOpacity
@@ -326,6 +324,7 @@ const MyProfileScreen = ({ navigation }) => {
                     >
                       <Icon name="more-vertical" size={14} color="#555" />
                     </TouchableOpacity>
+
                     {menuVisibleId === `comment-${item._id}-${idx}` && (
                       <View style={[postStyles.dropdownMenu, { top: 25, right: 6 }]}>
                         <TouchableOpacity
@@ -366,7 +365,7 @@ const MyProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.emptySquare} onPress={handlePickImage}>
-            <Image source={{ uri: imageUri }} style={styles.profileImage} resizeMode="cover" />
+            <Image source={{ uri: imageUri }} style={styles.profileImage} resizeMode="cover" key={imageUri} />
           </TouchableOpacity>
         )}
 
@@ -385,9 +384,11 @@ const MyProfileScreen = ({ navigation }) => {
           <Text style={styles.profileName}>{user?.fullName || "Your Name Here"}</Text>
           {user?.bio && <Text style={styles.profileBio}>{user.bio}</Text>}
           {user?.link && <Text style={styles.profileBio}>{user.link}</Text>}
+
           <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate("EditProfileScreen")}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
+
           <View style={styles.divider} />
         </View>
 
