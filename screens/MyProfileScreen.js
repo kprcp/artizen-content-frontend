@@ -288,15 +288,9 @@ const MyProfileScreen = ({ navigation }) => {
         </View>
         {isCommentBoxActive && (
           <>
-            <View style={{ marginTop: 10 }}>
+            <View style={postStyles.commentBoxContainer}>
               <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  padding: 8,
-                  borderRadius: 8,
-                  marginBottom: 6,
-                }}
+                style={postStyles.commentInput}
                 placeholder="Write a comment..."
                 value={commentText}
                 onChangeText={setCommentText}
@@ -317,25 +311,34 @@ const MyProfileScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             {item.comments?.map((cmt, idx) => (
-              <View
-                key={idx}
-                style={{
-                  marginTop: 10,
-                  padding: 8,
-                  borderRadius: 8,
-                  backgroundColor: "#f1f1f1",
-                  position: "relative",
-                }}
-              >
+              <View key={idx} style={postStyles.commentContainer}>
                 <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
                 <Text>{cmt.content}</Text>
                 {(cmt.userEmail === user?.email || item.userEmail === user?.email) && (
-                  <TouchableOpacity
-                    style={{ position: "absolute", top: 6, right: 6 }}
-                    onPress={() => confirmDeleteComment(item._id, idx)}
-                  >
-                    <Icon name="trash" size={16} color="red" />
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={{ position: "absolute", top: 6, right: 6, padding: 2 }}
+                      onPress={() =>
+                        setMenuVisibleId(
+                          menuVisibleId === `comment-${item._id}-${idx}` ? null : `comment-${item._id}-${idx}`,
+                        )
+                      }
+                    >
+                      <Icon name="more-vertical" size={14} color="#555" />
+                    </TouchableOpacity>
+                    {menuVisibleId === `comment-${item._id}-${idx}` && (
+                      <View style={[postStyles.dropdownMenu, { top: 25, right: 6 }]}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMenuVisibleId(null)
+                            confirmDeleteComment(item._id, idx)
+                          }}
+                        >
+                          <Text style={postStyles.deleteText}>Delete</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </>
                 )}
               </View>
             ))}
@@ -418,10 +421,16 @@ const postStyles = StyleSheet.create({
     marginHorizontal: 10,
     padding: 15,
     borderRadius: 12,
-    backgroundColor: "#ffffff",
-    borderColor: "#ccc",
+    backgroundColor: "#ffffff", // ✅ Changed from "#fafafa" to white
+    borderColor: "#e0e0e0", // ✅ Lighter border color
     borderWidth: 1,
     position: "relative",
+    // ✅ Add subtle shadow for modern card look
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2, // For Android shadow
   },
   postTitle: {
     fontSize: 16,
@@ -471,5 +480,25 @@ const postStyles = StyleSheet.create({
     color: "red",
     fontSize: 14,
     fontWeight: "600",
+  },
+  commentBoxContainer: {
+    marginTop: 10,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    padding: 8,
+    marginBottom: 6,
+  },
+  commentContainer: {
+    marginTop: 10,
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    position: "relative",
   },
 })

@@ -193,6 +193,7 @@ const UserProfileScreen = ({ route, navigation }) => {
                 style={{
                   borderWidth: 1,
                   borderColor: "#ccc",
+                  backgroundColor: "#ffffff",
                   padding: 8,
                   borderRadius: 8,
                   marginBottom: 6,
@@ -223,7 +224,9 @@ const UserProfileScreen = ({ route, navigation }) => {
                   marginTop: 10,
                   padding: 8,
                   borderRadius: 8,
-                  backgroundColor: "#f1f1f1",
+                  backgroundColor: "#ffffff",
+                  borderColor: "#ccc",
+                  borderWidth: 1,
                   position: "relative",
                 }}
               >

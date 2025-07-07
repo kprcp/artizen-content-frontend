@@ -148,7 +148,7 @@ const WorldScreen = ({ navigation }) => {
     const currentProfileImage = getCurrentProfileImage(item.userEmail) || item.profileImage
 
     return (
-      <View style={styles.postContainer}>
+      <View style={[styles.postContainer, localStyles.postContainerOverride]}>
         {/* ✅ Show 3-dot menu for user's own posts with Delete option */}
         {isOwner && (
           <>
@@ -238,15 +238,9 @@ const WorldScreen = ({ navigation }) => {
 
         {isCommentBoxActive && (
           <>
-            <View style={{ marginTop: 10, width: "100%" }}>
+            <View style={localStyles.commentBoxContainer}>
               <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  padding: 8,
-                  borderRadius: 8,
-                  marginBottom: 6,
-                }}
+                style={localStyles.commentInput}
                 placeholder="Write a comment..."
                 value={commentText}
                 onChangeText={setCommentText}
@@ -267,17 +261,7 @@ const WorldScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             {item.comments?.map((cmt, idx) => (
-              <View
-                key={idx}
-                style={{
-                  marginTop: 10,
-                  width: "100%",
-                  padding: 8,
-                  borderRadius: 8,
-                  backgroundColor: "#f1f1f1",
-                  position: "relative",
-                }}
-              >
+              <View key={idx} style={localStyles.commentContainer}>
                 <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
                 <Text>{cmt.content}</Text>
                 {(cmt.userEmail === user?.email || item.userEmail === user?.email) && (
@@ -398,5 +382,38 @@ const localStyles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
+  },
+  postContainerOverride: {
+    backgroundColor: "#ffffff", // ✅ Changed from gray to white
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0", // Light gray border for definition
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2, // For Android shadow
+  },
+  commentBoxContainer: {
+    marginTop: 10,
+    width: "100%",
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    padding: 8,
+    marginBottom: 6,
+  },
+  commentContainer: {
+    marginTop: 10,
+    width: "100%",
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    position: "relative",
   },
 })
