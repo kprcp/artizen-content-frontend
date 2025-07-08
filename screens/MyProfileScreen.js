@@ -34,15 +34,8 @@ const MyProfileScreen = ({ navigation }) => {
   const [imageUploading, setImageUploading] = useState(false)
 
   // ✅ Smart API URL detection - same as EditProfileScreen and PostContext
-  const getApiUrl = () => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname
-      if (hostname === "localhost" || hostname === "127.0.0.1") {
-        return "http://localhost:5001"
-      }
-    }
-    return "https://api.artizen.world" // ✅ Your correct production URL
-  }
+  const getApiUrl = () => "https://api.artizen.world"
+
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
