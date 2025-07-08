@@ -16,15 +16,15 @@ const EditProfileScreen = ({ navigation }) => {
   const [imageUploading, setImageUploading] = useState(false)
 
   // ✅ Smart API URL detection - FIXED to use correct URL
-  const getApiUrl = () => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname
-      if (hostname === "localhost" || hostname === "127.0.0.1") {
-        return "http://localhost:5001"
-      }
-    }
-    return "https://api.artizen.world" // ✅ Fixed to use your correct production URL
-  }
+const getApiUrl = () => {
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+  return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+}
+
+
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -78,7 +78,8 @@ const EditProfileScreen = ({ navigation }) => {
     setLoading(true)
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/user`, {
+      const response = await fetch(`${getApiUrl()}/api/auth/update-profile`, {
+  
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
