@@ -100,16 +100,13 @@ const SearchScreen = () => {
 
   // ✅ Helper function to get the current profile image for any user
   const getCurrentProfileImage = (itemEmail) => {
-    // If this search result is the current logged-in user, use their latest profile image
     if (itemEmail === user?.email) {
       return user.profileImage
     }
-    // For other users, return their cached image from search results
     return null
   }
 
   const renderItem = ({ item }) => {
-    // ✅ Get the current profile image (prioritize live user data over cached search data)
     const currentProfileImage = getCurrentProfileImage(item.email) || item.profileImage
 
     return (

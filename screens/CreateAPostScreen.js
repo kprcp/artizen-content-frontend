@@ -51,51 +51,51 @@ const CreateAPostScreen = ({ navigation }) => {
   })
 
   // Date/Time selection state - Commented out for MVP
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [selectedDate, setSelectedDate] = useState(null);
-  // const [month, setMonth] = useState(today.getMonth());
-  // const [day, setDay] = useState(today.getDate());
-  // const [year, setYear] = useState(today.getFullYear());
-  // const [hour, setHour] = useState('12');
-  // const [minute, setMinute] = useState('00');
-  // const [ampm, setAmpm] = useState('AM');
+  // const [isModalOpen, setIsModalOpen] = useState(false)
+  // const [selectedDate, setSelectedDate] = useState(null)
+  // const [month, setMonth] = useState(today.getMonth())
+  // const [day, setDay] = useState(today.getDate())
+  // const [year, setYear] = useState(today.getFullYear())
+  // const [hour, setHour] = useState('12')
+  // const [minute, setMinute] = useState('00')
+  // const [ampm, setAmpm] = useState('AM')
 
   // Date/Time helper arrays and functions - Commented out for MVP
-  // const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  // const years = Array.from({ length: 20 }, (_, i) => currentYear + i);
-  // const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  // const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-  // const getDaysInMonth = (month, year) => new Date(year, typeof month === 'string' ? months.indexOf(month) + 1 : month + 1, 0).getDate();
-  // const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => String(i + 1).padStart(2, '0'));
+  // const months = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  // const years = Array.from({ length: 20 }, (_, i) => currentYear + i)
+  // const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+  // const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+  // const getDaysInMonth = (month, year) => new Date(year, typeof month === 'string' ? months.indexOf(month) + 1 : month + 1, 0).getDate()
+  // const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => String(i + 1).padStart(2, '0'))
 
   // const handleConfirm = () => {
-  //   let finalHour = parseInt(hour);
-  //   if (ampm === 'PM' && finalHour !== 12) finalHour += 12;
-  //   if (ampm === 'AM' && finalHour === 12) finalHour = 0;
-  //   const finalDate = new Date(year, months.indexOf(month), parseInt(day), finalHour, parseInt(minute));
-  //   setSelectedDate(finalDate);
-  //   setIsModalOpen(false);
-  // };
+  //   let finalHour = parseInt(hour)
+  //   if (ampm === 'PM' && finalHour !== 12) finalHour += 12
+  //   if (ampm === 'AM' && finalHour === 12) finalHour = 0
+  //   const finalDate = new Date(year, months.indexOf(month), parseInt(day), finalHour, parseInt(minute))
+  //   setSelectedDate(finalDate)
+  //   setIsModalOpen(false)
+  // }
 
   // useEffect(() => {
-  //   const maxDay = getDaysInMonth(month, year);
+  //   const maxDay = getDaysInMonth(month, year)
   //   if (parseInt(day) > maxDay) {
-  //     setDay(String(maxDay).padStart(2, '0'));
+  //     setDay(String(maxDay).padStart(2, '0'))
   //   }
-  // }, [month, year]);
+  // }, [month, year])
 
   // const formatDateTime = (date) => {
-  //   if (!date) return 'Now';
-  //   const formattedMonth = months[date.getMonth()];
-  //   const day = date.getDate();
-  //   const year = date.getFullYear();
-  //   let hour = date.getHours();
-  //   const minute = date.getMinutes().toString().padStart(2, '0');
-  //   const ampm = hour >= 12 ? 'PM' : 'AM';
-  //   hour = hour % 12;
-  //   hour = hour ? hour : 12;
-  //   return `${formattedMonth} ${day}, ${year}, ${hour}:${minute} ${ampm}`;
-  // };
+  //   if (!date) return 'Now'
+  //   const formattedMonth = months[date.getMonth()]
+  //   const day = date.getDate()
+  //   const year = date.getFullYear()
+  //   let hour = date.getHours()
+  //   const minute = date.getMinutes().toString().padStart(2, '0')
+  //   const ampm = hour >= 12 ? 'PM' : 'AM'
+  //   hour = hour % 12
+  //   hour = hour ? hour : 12
+  //   return `${formattedMonth} ${day}, ${year}, ${hour}:${minute} ${ampm}`
+  // }
 
   return (
     <View style={styles.container}>

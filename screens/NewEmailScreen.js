@@ -12,6 +12,15 @@ const NewEmailScreen = ({ navigation, route }) => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
+  // ✅ Smart API detection
+  const getApiUrl = () => {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+    return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
@@ -66,8 +75,8 @@ const NewEmailScreen = ({ navigation, route }) => {
     setError("")
 
     try {
-      // Request a code to the new email for confirmation
-      const response = await fetch("https://api.artizen.world/api/auth/request-new-email-verification", {
+      // ✅ Smart API usage
+      const response = await fetch(`${getApiUrl()}/api/auth/request-new-email-verification`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldEmail, newEmail: trimmedNewEmail }),

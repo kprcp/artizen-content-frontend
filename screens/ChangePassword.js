@@ -1,9 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useEffect, useState } from "react";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../contexts1/AuthContext"; // ✅ Use the custom hook
-import styles from "../styles/ChangePasswordStyles"
+import styles from "../styles/ChangePasswordStyles";
+
+// ✅ Smart API URL detection
+const getApiUrl = () => {
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+  return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+}
 
 const ChangePassword = ({ navigation }) => {
   const { user } = useAuth() // ✅ Get user from AuthContext
@@ -73,7 +82,7 @@ const ChangePassword = ({ navigation }) => {
 
     setLoading(true)
     try {
-      const response = await fetch("https://api.artizen.world/api/auth/change-password", {
+      const response = await fetch(`${getApiUrl()}/api/auth/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -1,9 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useEffect, useState } from "react";
+import { Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../contexts1/AuthContext"; // ✅ add AuthContext
-import VerificationStyles from "../styles/VerificationStyles"
+import VerificationStyles from "../styles/VerificationStyles";
+
+// ✅ Helper to switch between local and deployed
+const getApiUrl = (endpoint) => {
+  const local = "http://localhost:5001"
+  const prod = "https://api.artizen.world"
+  return (__DEV__ ? local : prod) + endpoint
+}
+
 
 const VerificationScreen = ({ route, navigation }) => {
   const { email, password } = route.params // ✅ password is passed from SignUpScreen
@@ -55,7 +63,7 @@ const VerificationScreen = ({ route, navigation }) => {
 
     try {
       // ✅ Step 1: Verify the email
-      const verifyRes = await fetch("https://api.artizen.world/api/auth/verify-email", {
+      const verifyRes = await fetch(getApiUrl("/api/auth/verify-email"), {  
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code }),
@@ -69,7 +77,7 @@ const VerificationScreen = ({ route, navigation }) => {
       }
 
       // ✅ Step 2: Log in automatically
-      const loginRes = await fetch("https://api.artizen.world/api/auth/login", {
+      const loginRes = await fetch(getApiUrl("/api/auth/login"), {  
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

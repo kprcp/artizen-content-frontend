@@ -12,6 +12,15 @@ const ResetPasswordScreen = ({ navigation, route }) => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
+  // ✅ Smart API URL detection
+  const getApiUrl = () => {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+    return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
@@ -63,7 +72,7 @@ const ResetPasswordScreen = ({ navigation, route }) => {
     setError("")
 
     try {
-      const response = await fetch("https://api.artizen.world/api/auth/reset-password", {
+      const response = await fetch(`${getApiUrl()}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), code, newPassword: password }),

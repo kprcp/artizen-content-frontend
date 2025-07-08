@@ -10,6 +10,15 @@ const ConfirmVerificationScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false)
   const email = route.params?.email
 
+  // ✅ Smart API URL detection
+  const getApiUrl = () => {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+    return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
@@ -56,7 +65,7 @@ const ConfirmVerificationScreen = ({ navigation, route }) => {
     setLoading(true)
 
     try {
-      const response = await fetch("https://api.artizen.world/api/auth/confirm-reset-code", {
+      const response = await fetch(`${getApiUrl()}/api/auth/confirm-reset-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code }),

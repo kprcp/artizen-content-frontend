@@ -11,6 +11,15 @@ const NotificationsScreen = ({ navigation }) => {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // ✅ Smart API detection
+  const getApiUrl = () => {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+    return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
@@ -52,7 +61,8 @@ const NotificationsScreen = ({ navigation }) => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await fetch(`https://api.artizen.world/api/notifications/${user.email}`)
+        // ✅ Smart API URL
+        const res = await fetch(`${getApiUrl()}/api/notifications/${user.email}`)
         const data = await res.json()
         if (data.success) {
           setNotifications(data.notifications)

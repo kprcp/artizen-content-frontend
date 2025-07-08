@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Image, Text, TouchableOpacity, View } from "react-native"
+import { useEffect, useState } from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../contexts1/AuthContext"; // ✅ added
-import SettingsStyle from "../styles/SettingsStyle"
+import SettingsStyle from "../styles/SettingsStyle";
 
 const SettingsScreen = ({ navigation }) => {
   const [accountPrivate, setIsPrivate] = useState(false)
@@ -11,6 +11,14 @@ const SettingsScreen = ({ navigation }) => {
   const [emailPressed, setEmailPressed] = useState(false)
   const [passwordPressed, setPasswordPressed] = useState(false)
   const { user, setUser } = useAuth() // ✅ grab the logged-in user
+
+  // ✅ Smart API URL detection
+  const getApiUrl = () => {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+  }
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -73,7 +81,7 @@ const SettingsScreen = ({ navigation }) => {
     if (!confirmed) return
 
     try {
-      const res = await fetch("https://api.artizen.world/api/auth/delete-account", {
+      const res = await fetch(`${getApiUrl()}/api/auth/delete-account`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email }), // ✅ email from user context

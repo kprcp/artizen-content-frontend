@@ -21,6 +21,17 @@ import styles from "../styles/UserProfileStyles"
 
 const { width } = Dimensions.get("window")
 
+// ✅ Smart API URL function
+const getApiUrl = () => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:5001"
+    }
+  }
+  return "https://api.artizen.world"
+}
+
 const UserProfileScreen = ({ route, navigation }) => {
   const { user: currentUser, setUser } = useAuth() // ✅ include setUser
   const { posts, toggleLike, addComment, deleteComment } = usePostContext()
@@ -87,7 +98,10 @@ const UserProfileScreen = ({ route, navigation }) => {
 
   const fetchFollowCounts = async (email) => {
     try {
-      const res = await fetch(`https://api.artizen.world/api/auth/user-follow-counts?email=${email}`)
+      const res = await fetch(`${getApiUrl()}/api/auth/user-follow-counts?email=${email}`)
+
+      
+
       const data = await res.json()
       setFollowerCount(data.followerCount)
       setFollowingCount(data.followingCount)

@@ -10,6 +10,15 @@ const PostPage = ({ route, navigation }) => {
   const { title, content, fullName, profileImage } = route.params || {}
   const { addPost } = usePostContext()
 
+  // ✅ Smart API URL detection (for future-proofing)
+  const getApiUrl = () => {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+    return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+  }
+
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {

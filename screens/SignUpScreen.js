@@ -5,6 +5,15 @@ import { useEffect, useState } from "react"
 import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from "react-native"
 import { styles } from "../styles/SignUpStyles"
 
+// ✅ Smart API URL detection
+const getApiUrl = () => {
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+  return isLocalhost ? "http://localhost:5001" : "https://api.artizen.world"
+}
+
 const SignUpScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
@@ -107,7 +116,7 @@ const SignUpScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch("https://api.artizen.world/api/auth/signup", {
+      const response = await fetch(`${getApiUrl()}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
