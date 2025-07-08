@@ -3,7 +3,6 @@ import { useFocusEffect } from "@react-navigation/native"
 import * as ImagePicker from "expo-image-picker"
 import React, { useEffect, useState } from "react"
 import {
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -104,15 +103,15 @@ const MyProfileScreen = ({ navigation }) => {
       })
       const data = await response.json()
       if (!response.ok) {
-        Alert.alert("Upload Failed", data.error || "Try again.")
+        alert("Upload Failed: " + (data.error || "Try again."))
       } else {
         console.log("✅ Profile image updated on server")
         setUser((prev) => ({ ...prev, profileImage: base64Uri }))
-        Alert.alert("Success", "✅ Your profile picture has been updated!")
+        alert("✅ Your profile picture has been updated!")
       }
     } catch (err) {
       console.error("Image upload error:", err)
-      Alert.alert("Error", "Could not upload image.")
+      alert("❌ Could not upload image.")
     }
   }
 
@@ -129,7 +128,7 @@ const MyProfileScreen = ({ navigation }) => {
 
         // Validate file type
         if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
-          Alert.alert("Error", "❌ Invalid format. Please upload a JPG or PNG image.")
+          alert("❌ Invalid format. Please upload a JPG or PNG image.")
           return
         }
 
@@ -137,7 +136,7 @@ const MyProfileScreen = ({ navigation }) => {
         const img = new Image()
         img.onload = () => {
           if (img.width < 200 || img.height < 200) {
-            Alert.alert("Error", "❌ Image too small. Please select an image that is at least 200x200 pixels.")
+            alert("❌ Image too small. Please select an image that is at least 200x200 pixels.")
             return
           }
 
@@ -187,7 +186,7 @@ const MyProfileScreen = ({ navigation }) => {
         }
 
         if (width < 200 || height < 200) {
-          Alert.alert("Error", "❌ Image too small. Please select an image that is at least 200x200 pixels.")
+          alert("❌ Image too small. Please select an image that is at least 200x200 pixels.")
           return
         }
 
@@ -208,10 +207,9 @@ const MyProfileScreen = ({ navigation }) => {
       const confirmed = window.confirm("Are you sure to delete this post?")
       if (confirmed) deletePost(id)
     } else {
-      Alert.alert("Delete Post", "Are you sure to delete this post?", [
-        { text: "No", style: "cancel" },
-        { text: "Yes", style: "destructive", onPress: () => deletePost(id) },
-      ])
+      // For mobile, use a simple alert since Alert.alert might not be available
+      const confirmed = window.confirm("Are you sure to delete this post?")
+      if (confirmed) deletePost(id)
     }
   }
 
@@ -220,10 +218,9 @@ const MyProfileScreen = ({ navigation }) => {
       const confirmed = window.confirm("Are you sure to delete this comment?")
       if (confirmed) deleteComment(postId, index)
     } else {
-      Alert.alert("Delete Comment", "Are you sure to delete this comment?", [
-        { text: "No", style: "cancel" },
-        { text: "Yes", style: "destructive", onPress: () => deleteComment(postId, index) },
-      ])
+      // For mobile, use a simple alert since Alert.alert might not be available
+      const confirmed = window.confirm("Are you sure to delete this comment?")
+      if (confirmed) deleteComment(postId, index)
     }
   }
 
