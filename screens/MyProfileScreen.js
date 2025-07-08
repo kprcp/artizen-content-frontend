@@ -29,7 +29,20 @@ const MyProfileScreen = ({ navigation }) => {
   const [commentText, setCommentText] = useState("")
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
-  const [menuVisibleId, setMenuVisibleId] = useState(null) // ✅ Added for 3-dot menu
+  const [menuVisibleId, setMenuVisibleId] = useState(null)
+  // ✅ Add loading states like EditProfileScreen
+  const [imageUploading, setImageUploading] = useState(false)
+
+  // ✅ Smart API URL detection - same as EditProfileScreen and PostContext
+  const getApiUrl = () => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:5001"
+      }
+    }
+    return "https://api.artizen.world" // ✅ Your correct production URL
+  }
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -65,7 +78,8 @@ const MyProfileScreen = ({ navigation }) => {
 
   const fetchCounts = async () => {
     try {
-      const res = await fetch(`https://api.artizen.world/api/auth/user-follow-counts?email=${user.email}`)
+      // ✅ Use smart API URL detection
+      const res = await fetch(`${getApiUrl()}/api/auth/user-follow-counts?email=${user.email}`)
       const data = await res.json()
       if (res.ok) {
         setFollowerCount(data.followerCount || 0)
@@ -91,9 +105,13 @@ const MyProfileScreen = ({ navigation }) => {
     }, [user?.email]),
   )
 
+  // ✅ Updated uploadProfileImage to match EditProfileScreen functionality
   const uploadProfileImage = async (base64Uri) => {
     try {
-      const response = await fetch("https://api.artizen.world/api/auth/update-profile-image", {
+      console.log("🚀 uploadProfileImage called")
+      console.log("🌐 Using API URL:", getApiUrl())
+
+      const response = await fetch(`${getApiUrl()}/api/auth/update-profile-image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -101,60 +119,111 @@ const MyProfileScreen = ({ navigation }) => {
           profileImage: base64Uri,
         }),
       })
+
       const data = await response.json()
+      console.log("📡 Server response:", response.status, data)
+
       if (!response.ok) {
-        alert("Upload Failed: " + (data.error || "Try again."))
-      } else {
-        console.log("✅ Profile image updated on server")
-        setUser((prev) => ({ ...prev, profileImage: base64Uri }))
-        alert("✅ Your profile picture has been updated!")
+        throw new Error(data.message || `HTTP ${response.status}`)
       }
+
+      console.log("✅ Server upload successful!")
+      setUser((prev) => ({ ...prev, profileImage: base64Uri }))
+      alert("✅ Your profile picture has been updated!")
     } catch (err) {
-      console.error("Image upload error:", err)
-      alert("❌ Could not upload image.")
+      console.error("❌ Upload error:", err)
+      alert(`❌ Upload failed: ${err.message}`)
     }
   }
 
+  // ✅ Updated handlePickImage to match EditProfileScreen functionality exactly
   const handlePickImage = async () => {
+    console.log("🔄 Change photo button clicked")
+    console.log("👤 Current user:", user?.email)
+
     // ✅ Check if we're in a web environment
     if (typeof window !== "undefined" && window.document) {
+      console.log("🌐 Web environment detected")
       // Web environment - use HTML input
       const input = document.createElement("input")
       input.type = "file"
       input.accept = "image/jpeg,image/jpg,image/png"
       input.onchange = (event) => {
+        console.log("📁 File input changed")
         const file = event.target.files[0]
-        if (!file) return
+        if (!file) {
+          console.log("❌ No file selected")
+          return
+        }
+
+        console.log("📁 File selected:", {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        })
 
         // Validate file type
         if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+          console.log("❌ Invalid file type:", file.type)
           alert("❌ Invalid format. Please upload a JPG or PNG image.")
           return
         }
 
         // Create image to check dimensions
-        const img = new Image()
+        const img = new window.Image()
         img.onload = () => {
+          console.log("📐 Image dimensions:", img.width, "x", img.height)
           if (img.width < 200 || img.height < 200) {
+            console.log("❌ Image too small")
             alert("❌ Image too small. Please select an image that is at least 200x200 pixels.")
             return
           }
 
+          console.log("✅ Image validation passed")
+          setImageUploading(true)
+
           // Convert to base64
           const reader = new FileReader()
-          reader.onload = (e) => {
+          reader.onload = async (e) => {
             const base64 = e.target.result
-            setImageUri(base64)
-            uploadProfileImage(base64)
+            console.log("📄 Base64 conversion complete, length:", base64.length)
+            console.log("📄 Base64 preview:", base64.substring(0, 100) + "...")
+
+            // Update UI immediately for better UX
+            console.log("🔄 Updating UI with new image")
+            setUser((prev) => {
+              console.log("👤 Previous user image:", prev?.profileImage?.substring(0, 50) + "...")
+              const updated = { ...prev, profileImage: base64 }
+              console.log("👤 Updated user image:", updated?.profileImage?.substring(0, 50) + "...")
+              return updated
+            })
+
+            // Upload to server
+            console.log("🚀 Starting server upload...")
+            await uploadProfileImage(base64)
+            setImageUploading(false)
           }
+          reader.onerror = () => {
+            console.error("❌ File read error")
+            alert("❌ Failed to read file")
+            setImageUploading(false)
+          }
+          console.log("📖 Starting file read...")
           reader.readAsDataURL(file)
         }
+        img.onerror = () => {
+          console.error("❌ Image load error")
+          alert("❌ Invalid image file")
+        }
+        console.log("🖼️ Creating image object URL...")
         img.src = URL.createObjectURL(file)
       }
+      console.log("🖱️ Triggering file picker...")
       input.click()
       return
     }
 
+    console.log("📱 Mobile environment - using ImagePicker")
     // Mobile environment - use ImagePicker
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -190,15 +259,22 @@ const MyProfileScreen = ({ navigation }) => {
           return
         }
 
+        setImageUploading(true)
+
         const fileType = isPNG ? "png" : "jpeg"
         const dataUri = `data:image/${fileType};base64,${base64}`
 
-        setImageUri(dataUri)
-        uploadProfileImage(dataUri)
+        // Update UI immediately
+        setUser((prev) => ({ ...prev, profileImage: dataUri }))
+
+        // Upload to server
+        await uploadProfileImage(dataUri)
+        setImageUploading(false)
       }
     } catch (error) {
       console.error("ImagePicker error:", error)
       alert("❌ Error accessing image picker. Please try again.")
+      setImageUploading(false)
     }
   }
 
@@ -356,13 +432,41 @@ const MyProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        {/* ✅ Updated profile image section to match EditProfileScreen */}
         {!imageUri ? (
-          <TouchableOpacity style={styles.emptySquare} onPress={handlePickImage} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.emptySquare}
+            onPress={handlePickImage}
+            activeOpacity={0.8}
+            disabled={imageUploading} // ✅ Disable when uploading
+          >
             <Image source={require("../assets/icn_add_light_blue.png")} style={styles.addIcon} resizeMode="contain" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.emptySquare} onPress={handlePickImage}>
+          <TouchableOpacity
+            style={styles.emptySquare}
+            onPress={handlePickImage}
+            disabled={imageUploading} // ✅ Disable when uploading
+          >
             <Image source={{ uri: imageUri }} style={styles.profileImage} resizeMode="cover" key={imageUri} />
+            {/* ✅ Show loading overlay when uploading - same as EditProfileScreen */}
+            {imageUploading && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 20, // Match the profile image border radius
+                }}
+              >
+                <Text style={{ color: "white", fontWeight: "bold" }}>Uploading...</Text>
+              </View>
+            )}
           </TouchableOpacity>
         )}
 

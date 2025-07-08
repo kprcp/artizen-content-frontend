@@ -15,7 +15,7 @@ const EditProfileScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
 
-  // ✅ Smart API URL detection
+  // ✅ Smart API URL detection - FIXED to use correct URL
   const getApiUrl = () => {
     if (typeof window !== "undefined") {
       const hostname = window.location.hostname
@@ -23,7 +23,7 @@ const EditProfileScreen = ({ navigation }) => {
         return "http://localhost:5001"
       }
     }
-    return "https://api.artizen.world"
+    return "https://api.artizen.world" // ✅ Fixed to use your correct production URL
   }
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
@@ -33,19 +33,15 @@ const EditProfileScreen = ({ navigation }) => {
         document.title = "Artizen"
       }
     }
-
     // Set immediately
     setTitle()
-
     // Set after a small delay to override anything else
     const timer1 = setTimeout(setTitle, 100)
     const timer2 = setTimeout(setTitle, 500)
     const timer3 = setTimeout(setTitle, 1000)
-
     // Set on focus (when user clicks on tab)
     const handleFocus = () => setTitle()
     window.addEventListener?.("focus", handleFocus)
-
     // Cleanup
     return () => {
       clearTimeout(timer1)
@@ -73,17 +69,18 @@ const EditProfileScreen = ({ navigation }) => {
   const handleUpdate = async () => {
     setError("")
     setSuccess("")
+
     if (!user?.email) {
       setError("⚠️ User not logged in.")
       return
     }
 
     setLoading(true)
+
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/update-profile`, {
+      const response = await fetch(`${getApiUrl()}/api/auth/user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           email: user.email.trim(),
           fullName: fullName.trim(),
@@ -102,6 +99,7 @@ const EditProfileScreen = ({ navigation }) => {
           bio: bio.trim(),
           link: link.trim(),
         }))
+
         setSuccess("✅ Profile updated successfully!")
 
         // ✅ Navigate back after a brief delay to show success message
@@ -109,7 +107,7 @@ const EditProfileScreen = ({ navigation }) => {
           navigation.goBack()
         }, 1500)
       } else {
-        setError(`⚠️ ${data.error || "Failed to update profile."}`)
+        setError(`⚠️ ${data.message || "Failed to update profile."}`)
       }
     } catch (err) {
       console.error("Update profile error:", err)
@@ -137,7 +135,7 @@ const EditProfileScreen = ({ navigation }) => {
       console.log("📡 Server response:", response.status, data)
 
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}`)
+        throw new Error(data.message || `HTTP ${response.status}`)
       }
 
       console.log("✅ Server upload successful!")
@@ -164,12 +162,10 @@ const EditProfileScreen = ({ navigation }) => {
     // ✅ Check if we're in a web environment
     if (typeof window !== "undefined" && window.document) {
       console.log("🌐 Web environment detected")
-
       // Web environment - use HTML input
       const input = document.createElement("input")
       input.type = "file"
       input.accept = "image/jpeg,image/jpg,image/png"
-
       input.onchange = (event) => {
         console.log("📁 File input changed")
         const file = event.target.files[0]
@@ -195,7 +191,6 @@ const EditProfileScreen = ({ navigation }) => {
         const img = new window.Image()
         img.onload = () => {
           console.log("📐 Image dimensions:", img.width, "x", img.height)
-
           if (img.width < 200 || img.height < 200) {
             console.log("❌ Image too small")
             setError("❌ Image too small. Please select an image that is at least 200x200 pixels.")
@@ -227,26 +222,21 @@ const EditProfileScreen = ({ navigation }) => {
             await uploadProfileImage(base64)
             setImageUploading(false)
           }
-
           reader.onerror = () => {
             console.error("❌ File read error")
             setError("❌ Failed to read file")
             setImageUploading(false)
           }
-
           console.log("📖 Starting file read...")
           reader.readAsDataURL(file)
         }
-
         img.onerror = () => {
           console.error("❌ Image load error")
           setError("❌ Invalid image file")
         }
-
         console.log("🖼️ Creating image object URL...")
         img.src = URL.createObjectURL(file)
       }
-
       console.log("🖱️ Triggering file picker...")
       input.click()
       return
@@ -289,6 +279,7 @@ const EditProfileScreen = ({ navigation }) => {
         }
 
         setImageUploading(true)
+
         const fileType = isPNG ? "png" : "jpeg"
         const dataUri = `data:image/${fileType};base64,${base64}`
 
