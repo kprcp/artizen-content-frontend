@@ -12,7 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native"
 import Icon from "react-native-vector-icons/Feather"
 import { useAuth } from "../contexts1/AuthContext"
@@ -21,7 +21,6 @@ import styles from "../styles/UserProfileStyles"
 
 const { width } = Dimensions.get("window")
 
-// ✅ Smart API URL function
 const getApiUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname
@@ -33,7 +32,7 @@ const getApiUrl = () => {
 }
 
 const UserProfileScreen = ({ route, navigation }) => {
-  const { user: currentUser, setUser } = useAuth() // ✅ include setUser
+  const { user: currentUser, setUser } = useAuth()
   const { posts, toggleLike, addComment, deleteComment } = usePostContext()
   const { user: passedUser } = route.params
   const [user, setUserProfile] = useState(passedUser?.email ? passedUser : null)
@@ -42,28 +41,20 @@ const UserProfileScreen = ({ route, navigation }) => {
   const [followingCount, setFollowingCount] = useState(0)
   const [activeCommentBox, setActiveCommentBox] = useState(null)
   const [commentText, setCommentText] = useState("")
+  const [menuVisibleId, setMenuVisibleId] = useState(null)
 
-  // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
     const setTitle = () => {
       if (typeof document !== "undefined") {
         document.title = "Artizen"
       }
     }
-
-    // Set immediately
     setTitle()
-
-    // Set after a small delay to override anything else
     const timer1 = setTimeout(setTitle, 100)
     const timer2 = setTimeout(setTitle, 500)
     const timer3 = setTimeout(setTitle, 1000)
-
-    // Set on focus (when user clicks on tab)
     const handleFocus = () => setTitle()
     window.addEventListener?.("focus", handleFocus)
-
-    // Cleanup
     return () => {
       clearTimeout(timer1)
       clearTimeout(timer2)
@@ -72,7 +63,6 @@ const UserProfileScreen = ({ route, navigation }) => {
     }
   }, [])
 
-  // 🔄 Also set title whenever component re-renders
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.title = "Artizen"
@@ -93,15 +83,12 @@ const UserProfileScreen = ({ route, navigation }) => {
         fetchFollowCounts(email)
         checkFollowStatus(email)
       }
-    }, [route?.params?.user]), // Updated dependency array
+    }, [route?.params?.user])
   )
 
   const fetchFollowCounts = async (email) => {
     try {
       const res = await fetch(`${getApiUrl()}/api/auth/user-follow-counts?email=${email}`)
-
-      
-
       const data = await res.json()
       setFollowerCount(data.followerCount)
       setFollowingCount(data.followingCount)
@@ -113,7 +100,7 @@ const UserProfileScreen = ({ route, navigation }) => {
   const checkFollowStatus = async (email) => {
     try {
       const res = await fetch(
-        `https://api.artizen.world/api/auth/check-follow?followerId=${currentUser.email}&followingId=${email}`,
+        `https://api.artizen.world/api/auth/check-follow?followerId=${currentUser.email}&followingId=${email}`
       )
       const data = await res.json()
       setIsFollowing(data.following)
@@ -133,7 +120,7 @@ const UserProfileScreen = ({ route, navigation }) => {
           ...currentUser,
           following: followingEmails,
         }
-        setUser(updatedUser) // ✅ update context + localStorage
+        setUser(updatedUser)
       }
     } catch (err) {
       console.error("❌ Failed to refresh user:", err)
@@ -158,7 +145,7 @@ const UserProfileScreen = ({ route, navigation }) => {
       setIsFollowing(newFollowState)
       setFollowerCount((prev) => (newFollowState ? prev + 1 : Math.max(prev - 1, 0)))
 
-      await refreshCurrentUser() // ✅ ensure WorldScreen updates
+      await refreshCurrentUser()
     } catch (err) {
       console.error("Follow toggle error:", err)
       Alert.alert("Error", "Could not follow/unfollow user.")
@@ -166,11 +153,17 @@ const UserProfileScreen = ({ route, navigation }) => {
   }
 
   const confirmDeleteComment = (postId, index) => {
+  if (typeof window !== "undefined") {
+    const confirmed = window.confirm("Are you sure to delete this comment?")
+    if (confirmed) deleteComment(postId, index)
+  } else {
     Alert.alert("Delete Comment", "Are you sure to delete this comment?", [
       { text: "No", style: "cancel" },
       { text: "Yes", style: "destructive", onPress: () => deleteComment(postId, index) },
     ])
   }
+}
+
 
   const renderPost = ({ item }) => {
     const isCommentBoxActive = activeCommentBox === item._id
@@ -232,30 +225,50 @@ const UserProfileScreen = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
             {item.comments?.map((cmt, idx) => (
-              <View
-                key={idx}
-                style={{
-                  marginTop: 10,
-                  padding: 8,
-                  borderRadius: 8,
-                  backgroundColor: "#ffffff",
-                  borderColor: "#ccc",
-                  borderWidth: 1,
-                  position: "relative",
-                }}
-              >
-                <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
-                <Text>{cmt.content}</Text>
-                {cmt.userEmail === currentUser?.email && (
-                  <TouchableOpacity
-                    style={{ position: "absolute", top: 6, right: 6 }}
-                    onPress={() => confirmDeleteComment(item._id, idx)}
-                  >
-                    <Icon name="trash" size={16} color="red" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
+  <View
+    key={idx}
+    style={{
+      marginTop: 10,
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: "#ffffff",
+      borderColor: "#ccc",
+      borderWidth: 1,
+      position: "relative",
+    }}
+  >
+    <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
+    <Text>{cmt.content}</Text>
+
+    {/* ✅ Only allow delete option for the comment's owner */}
+    {(cmt.userEmail === currentUser?.email || item.userEmail === currentUser?.email) && (
+  <>
+    <TouchableOpacity
+      style={{ position: "absolute", top: 6, right: 6, padding: 2 }}
+      onPress={() =>
+        setMenuVisibleId(menuVisibleId === `comment-${item._id}-${idx}` ? null : `comment-${item._id}-${idx}`)
+      }
+    >
+      <Icon name="more-vertical" size={14} color="#555" />
+    </TouchableOpacity>
+
+    {menuVisibleId === `comment-${item._id}-${idx}` && (
+      <View style={[postStyles.dropdownMenu, { top: 25, right: 6 }]}>
+        <TouchableOpacity
+          onPress={() => {
+            setMenuVisibleId(null)
+            confirmDeleteComment(item._id, idx)
+          }}
+        >
+          <Text style={postStyles.deleteText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    )}
+  </>
+)}
+
+  </View>
+))}
           </>
         )}
       </View>
@@ -350,6 +363,24 @@ const postStyles = StyleSheet.create({
     borderWidth: 1,
     position: "relative",
     width: width / 2 - 30,
+  },
+   dropdownMenu: {
+    position: "absolute",
+    top: 35,
+    right: 10,
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    zIndex: 10,
+    elevation: 5,
+  },
+  deleteText: {
+    color: "red",
+    fontSize: 14,
+    fontWeight: "600",
   },
   postTitle: {
     fontSize: 16,
