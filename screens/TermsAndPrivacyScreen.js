@@ -182,7 +182,7 @@ const TermsPrivacyScreen = ({ navigation }) => {
           <Text style={styles.bodyText}>
             Artizen is moderated to maintain a safe and respectful environment. We may remove content or restrict users
             at our discretion. If you encounter content that violates these terms, report it or email
-            contact@artizen.life.
+            contact@artizen.world.
           </Text>
 
           {/* Section 6: Privacy Policy */}
