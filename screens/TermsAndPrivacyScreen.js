@@ -106,8 +106,8 @@ const TermsPrivacyScreen = ({ navigation }) => {
 
           {/* Welcome Text */}
           <Text style={styles.welcomeText}>
-            Welcome to Artizen, a creative platform for writers and thinkers to share original works and connect through
-            storytelling. This document outlines the Terms of Service ("Terms"), Privacy Policy, and Community
+            Welcome to Artizen, a platform to help creators bring their audience to one focused space where they can easily share updates, thoughts, and creative moments.
+            This document outlines the Terms of Service ("Terms"), Privacy Policy, and Community
             Guidelines that govern your use of Artizen. By using our platform, you agree to all of the following.
           </Text>
 
