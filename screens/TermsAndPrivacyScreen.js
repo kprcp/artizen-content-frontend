@@ -229,7 +229,7 @@ const TermsPrivacyScreen = ({ navigation }) => {
           <Text style={styles.bulletPoint}>• Correct any inaccurate data</Text>
           <Text style={styles.bulletPoint}>• Delete your account and associated data</Text>
           <Text style={styles.bodyText}>
-            To make a request, email contact@artizen.life. We comply with data protection laws including GDPR and CCPA
+            To make a request, email contact@artizen.world. We comply with data protection laws including GDPR and CCPA
             (where applicable).
           </Text>
 
@@ -260,7 +260,7 @@ const TermsPrivacyScreen = ({ navigation }) => {
           {/* Section 10: Contact Us */}
           <Text style={styles.sectionTitle}>10. Contact Us</Text>
           <Text style={styles.bodyText}>For questions, support, or legal inquiries, reach out to:</Text>
-          <Text style={styles.contactEmail}>📧 contact@artizen.life</Text>
+          <Text style={styles.contactEmail}>📧 contact@artizen.world</Text>
 
           {/* Accept Button */}
           <View style={styles.buttonContainer}>
