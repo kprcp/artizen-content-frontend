@@ -102,7 +102,7 @@ const TermsPrivacyScreen = ({ navigation }) => {
         <View style={styles.content}>
           {/* Title Section */}
           <Text style={styles.title}>Artizen – Terms of Service, Privacy Policy & Community Guidelines</Text>
-          <Text style={styles.effectiveDate}>Effective Date: [Insert Date]</Text>
+          <Text style={styles.effectiveDate}>Effective Date: 8th July 2025</Text>
           <Text style={styles.contact}>Contact: contact@artizen.life</Text>
 
           {/* Welcome Text */}
