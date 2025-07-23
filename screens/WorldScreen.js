@@ -214,7 +214,7 @@ const WorldScreen = ({ navigation }) => {
         <Text style={styles.postContent}>{item.content}</Text>
 
         <View style={styles.iconRow}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => toggleLike(item._id)}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => toggleLike(item.id || item._id)}>
             <Icon name="thumbs-up" size={20} color={item.liked ? "#007AFF" : "#555"} style={{ marginRight: 6 }} />
             <Text style={[styles.iconLabel, { color: item.liked ? "#007AFF" : "#555" }]}>
               Like{item.likes > 0 ? ` (${item.likes})` : ""}
@@ -253,7 +253,7 @@ const WorldScreen = ({ navigation }) => {
                   alignItems: "center",
                 }}
                 onPress={async () => {
-                  await addComment(item._id, commentText)
+                  await addComment(item.id || item._id, commentText)
                   setCommentText("")
                 }}
               >
@@ -319,7 +319,7 @@ const WorldScreen = ({ navigation }) => {
       <FlatList
         data={posts.filter((post) => user?.following?.includes(post.userEmail) || post.userEmail === user?.email)}
         renderItem={renderPost}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id || item._id}
         style={{ flex: 1 }}
         contentContainerStyle={[styles.feedContainer, { paddingBottom: 80 }]} // optional extra spacing
         ListEmptyComponent={<Text style={{ marginTop: 50, fontSize: 16, color: "#888" }}>No posts yet.</Text>}
