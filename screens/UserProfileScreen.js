@@ -1,19 +1,7 @@
 "use client"
-
 import { useFocusEffect } from "@react-navigation/native"
 import React, { useEffect, useState } from "react"
-import {
-  Alert,
-  Dimensions,
-  FlatList,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native"
+import { Alert, Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import Icon from "react-native-vector-icons/Feather"
 import { useAuth } from "../contexts1/AuthContext"
 import { usePostContext } from "../contexts1/PostContext"
@@ -50,19 +38,15 @@ const UserProfileScreen = ({ route, navigation }) => {
         document.title = "Artizen"
       }
     }
-
     // Set immediately
     setTitle()
-
     // Set after a small delay to override anything else
     const timer1 = setTimeout(setTitle, 100)
     const timer2 = setTimeout(setTitle, 500)
     const timer3 = setTimeout(setTitle, 1000)
-
     // Set on focus (when user clicks on tab)
     const handleFocus = () => setTitle()
     window.addEventListener?.("focus", handleFocus)
-
     // Cleanup
     return () => {
       clearTimeout(timer1)
@@ -99,9 +83,6 @@ const UserProfileScreen = ({ route, navigation }) => {
   const fetchFollowCounts = async (email) => {
     try {
       const res = await fetch(`${getApiUrl()}/api/auth/user-follow-counts?email=${email}`)
-
-      
-
       const data = await res.json()
       setFollowerCount(data.followerCount)
       setFollowingCount(data.followingCount)
@@ -150,14 +131,11 @@ const UserProfileScreen = ({ route, navigation }) => {
           followingId: user.email,
         }),
       })
-
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Toggle follow failed")
-
       const newFollowState = data.following
       setIsFollowing(newFollowState)
       setFollowerCount((prev) => (newFollowState ? prev + 1 : Math.max(prev - 1, 0)))
-
       await refreshCurrentUser() // ✅ ensure WorldScreen updates
     } catch (err) {
       console.error("Follow toggle error:", err)
@@ -265,7 +243,13 @@ const UserProfileScreen = ({ route, navigation }) => {
   if (!user) return null
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <div
+      style={{
+        height: "100vh",
+        overflow: "auto",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -331,9 +315,10 @@ const UserProfileScreen = ({ route, navigation }) => {
           contentContainerStyle={{ paddingBottom: 90 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          scrollEnabled={false}
         />
       </View>
-    </ScrollView>
+    </div>
   )
 }
 
@@ -345,7 +330,7 @@ const postStyles = StyleSheet.create({
     marginHorizontal: 10,
     padding: 15,
     borderRadius: 12,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#ffffff",
     borderColor: "#ccc",
     borderWidth: 1,
     position: "relative",

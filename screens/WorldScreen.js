@@ -1,5 +1,4 @@
 "use client"
-
 // WorldScreen.js
 import { useFocusEffect } from "@react-navigation/native"
 import React, { useEffect, useState } from "react"
@@ -15,7 +14,7 @@ const WorldScreen = ({ navigation }) => {
   const [menuVisibleId, setMenuVisibleId] = useState(null)
   const [activeCommentBox, setActiveCommentBox] = useState(null)
   const [commentText, setCommentText] = useState("")
-  const [hasUnread, setHasUnread] = useState(false) // ✅ New state
+  const [hasUnread, setHasUnread] = useState(false)
 
   // ✅ Smart API URL detection
   const getApiUrl = () => {
@@ -35,19 +34,15 @@ const WorldScreen = ({ navigation }) => {
         document.title = "Artizen"
       }
     }
-
     // Set immediately
     setTitle()
-
     // Set after a small delay to override anything else
     const timer1 = setTimeout(setTitle, 100)
     const timer2 = setTimeout(setTitle, 500)
     const timer3 = setTimeout(setTitle, 1000)
-
     // Set on focus (when user clicks on tab)
     const handleFocus = () => setTitle()
     window.addEventListener?.("focus", handleFocus)
-
     // Cleanup
     return () => {
       clearTimeout(timer1)
@@ -86,7 +81,6 @@ const WorldScreen = ({ navigation }) => {
         }
         fetchPosts()
       }
-
       refreshData()
     }, [user?.email]),
   )
@@ -135,6 +129,38 @@ const WorldScreen = ({ navigation }) => {
     // For other users, we'd need to fetch their latest data, but for now return the cached image
     // You could enhance this by maintaining a cache of all users' latest profile images
     return null
+  }
+
+  // ✅ SIMPLIFIED: Navigate exactly like SearchScreen does - no async calls
+  const handleProfileClick = (item) => {
+    const userEmail = (user?.email || "").trim().toLowerCase()
+    const postEmail = (item?.userEmail || "").trim().toLowerCase()
+    const isOwner = userEmail && postEmail && userEmail === postEmail
+
+    // If it's the current user's post, navigate to their own profile (MyProfileScreen)
+    if (isOwner) {
+      navigation.navigate("MyProfile")
+      return
+    }
+
+    // ✅ Create user object EXACTLY like SearchScreen results
+    const profileUser = {
+      email: item.userEmail,
+      fullName: item.fullName,
+      profileImage: item.profileImage,
+      bio: item.bio || "",
+      link: item.link || "",
+      // Add any other fields that might be expected
+      _id: item.userEmail, // Some components might expect an ID
+      createdAt: new Date().toISOString(), // Add timestamp if needed
+    }
+
+    console.log("🎯 WorldScreen: Navigating with user:", profileUser)
+
+    // Navigate with a small delay to ensure state is clean
+    setTimeout(() => {
+      navigation.navigate("UserProfileScreen", { user: profileUser })
+    }, 50)
   }
 
   const renderPost = ({ item }) => {
@@ -187,21 +213,23 @@ const WorldScreen = ({ navigation }) => {
           </>
         )}
 
-        {/* ✅ Use current profile image instead of cached post image */}
-        {currentProfileImage ? (
-          <Image
-            source={{ uri: currentProfileImage }}
-            style={styles.profilePicSquare}
-            resizeMode="cover"
-            key={`${item._id}-${currentProfileImage}`} // ✅ Force re-render when image changes
-          />
-        ) : (
-          <View style={[styles.profilePicSquare, localStyles.noProfileImageBox]}>
-            <Text style={styles.noProfileTextLine}>No</Text>
-            <Text style={styles.noProfileTextLine}>Profile</Text>
-            <Text style={styles.noProfileTextLine}>Picture</Text>
-          </View>
-        )}
+        {/* ✅ UPDATED: Make profile picture clickable */}
+        <TouchableOpacity onPress={() => handleProfileClick(item)} activeOpacity={0.7}>
+          {currentProfileImage ? (
+            <Image
+              source={{ uri: currentProfileImage }}
+              style={styles.profilePicSquare}
+              resizeMode="cover"
+              key={`${item._id}-${currentProfileImage}`} // ✅ Force re-render when image changes
+            />
+          ) : (
+            <View style={[styles.profilePicSquare, localStyles.noProfileImageBox]}>
+              <Text style={styles.noProfileTextLine}>No</Text>
+              <Text style={styles.noProfileTextLine}>Profile</Text>
+              <Text style={styles.noProfileTextLine}>Picture</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         {/* ✅ Use current user's name if it's their post */}
         {isOwner ? (
@@ -220,6 +248,7 @@ const WorldScreen = ({ navigation }) => {
               Like{item.likes > 0 ? ` (${item.likes})` : ""}
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => setActiveCommentBox(isCommentBoxActive ? null : item._id)}
@@ -260,6 +289,7 @@ const WorldScreen = ({ navigation }) => {
                 <Text style={{ color: "white" }}>Comment</Text>
               </TouchableOpacity>
             </View>
+
             {item.comments?.map((cmt, idx) => (
               <View key={idx} style={localStyles.commentContainer}>
                 <Text style={{ fontWeight: "bold" }}>{cmt.fullName}</Text>
