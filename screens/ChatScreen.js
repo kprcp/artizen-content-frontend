@@ -106,9 +106,9 @@ const ChatScreen = () => {
 
   const keyExtractor = (item) => item.id
 
-  return (
+   return (
     <View style={styles.container}>
-      {/* Header (kept same as before) */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Image
@@ -119,13 +119,19 @@ const ChatScreen = () => {
         </View>
       </View>
 
-      {/* Chat list */}
-      <FlatList
-        data={threads}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        contentContainerStyle={styles.threadList}
-      />
+      {/* If no chats */}
+      {threads.length === 0 ? (
+        <View style={styles.chatPlaceholder}>
+          <Text style={styles.chatPlaceholderText}>No Chats Yet</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={threads}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          contentContainerStyle={styles.threadList}
+        />
+      )}
     </View>
   )
 }
