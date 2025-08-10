@@ -15,9 +15,11 @@ import {
   View,
 } from "react-native"
 import Icon from "react-native-vector-icons/Feather"
+import ProfileAvatar from "../components/ProfileAvatar"
 import { useAuth } from "../contexts1/AuthContext"
 import { usePostContext } from "../contexts1/PostContext"
 import { styles } from "../styles/MyProfileStyles"
+
 
 const { width } = Dimensions.get("window")
 
@@ -432,43 +434,41 @@ const MyProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* ✅ Updated profile image section to match EditProfileScreen */}
-        {!imageUri ? (
-          <TouchableOpacity
-            style={styles.emptySquare}
-            onPress={handlePickImage}
-            activeOpacity={0.8}
-            disabled={imageUploading} // ✅ Disable when uploading
-          >
-            <Image source={require("../assets/icn_add_light_blue.png")} style={styles.addIcon} resizeMode="contain" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.emptySquare}
-            onPress={handlePickImage}
-            disabled={imageUploading} // ✅ Disable when uploading
-          >
-            <Image source={{ uri: imageUri }} style={styles.profileImage} resizeMode="cover" key={imageUri} />
-            {/* ✅ Show loading overlay when uploading - same as EditProfileScreen */}
-            {imageUploading && (
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: "rgba(0,0,0,0.5)",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 20, // Match the profile image border radius
-                }}
-              >
-                <Text style={{ color: "white", fontWeight: "bold" }}>Uploading...</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
+       {/* ✅ Profile image / initial avatar that fills the square */}
+<TouchableOpacity
+  style={styles.emptySquare}
+  onPress={handlePickImage}
+  activeOpacity={0.8}
+  disabled={imageUploading}
+>
+  <ProfileAvatar
+    name={user?.fullName || "?"}
+    imageUrl={imageUri || null}
+    size={120}          // match emptySquare: 120x120
+    borderRadius={20}   // match emptySquare radius
+    style={{ width: "100%", height: "100%" }} // force full fit
+  />
+
+  {imageUploading && (
+    <View
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 20,
+      }}
+    >
+      <Text style={{ color: "white", fontWeight: "bold" }}>Uploading...</Text>
+    </View>
+  )}
+</TouchableOpacity>
+
+        
 
         <View style={styles.followContainer}>
           <View style={styles.followItem}>

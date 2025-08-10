@@ -11,6 +11,7 @@ import BottomTabNavigator from './screens/BottomTabNavigator';
 import ChangeEmailScreen from './screens/ChangeEmail';
 import ChangeEmailVerificationScreen from './screens/ChangeEmailVerificationScreen';
 import ChangePasswordScreen from './screens/ChangePassword';
+import ChatUserScreen from './screens/ChatUserScreen';
 import ConfirmNewEmailVerificationScreen from './screens/ConfirmNewEmailVerificationScreen';
 import ConfirmVerificationScreen from './screens/ConfirmVerificationScreen';
 import CreateAPostScreen from './screens/CreateAPostScreen';
@@ -25,6 +26,7 @@ import SignUpScreen from './screens/SignUpScreen';
 import TermsAndPrivacyScreen from './screens/TermsAndPrivacyScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
 import VerificationScreen from './screens/VerificationScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -58,6 +60,8 @@ const AppNavigator = () => {
         <Stack.Screen name="PostPage" component={PostPage} />
         <Stack.Screen name="MainApp" component={BottomTabNavigator} />
         <Stack.Screen name="UserProfileScreen" component={UserProfileScreen} />
+        <Stack.Screen name="ChatScreen" component={ChatUserScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

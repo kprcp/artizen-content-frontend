@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -134,6 +134,33 @@ const styles = StyleSheet.create({
     color: '#777',
     fontWeight: '600',
   },
+  actionRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 10,
+  gap: 10, // Or use marginRight if gap not supported
+},
+
+chatButton: {
+  width: 35,
+  height: 35,
+  marginLeft: 12,
+  marginTop: 10, 
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: "#D1D5DB",      // ✅ Black border
+  backgroundColor: "#fff",  // ✅ White background
+  overflow: "hidden",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+
+chatIcon: {
+  width: 18,
+  height: 18,
+},
 });
 
 export default styles;

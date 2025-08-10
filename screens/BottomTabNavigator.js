@@ -6,18 +6,22 @@ import { Animated, Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity,
 import { navigate } from "../contexts1/NavigationService"
 
 // Screens
+import ChatScreen from "./ChatScreen"
 import MyProfileScreen from "./MyProfileScreen"
 import SearchStack from "./SearchStack"
 import WorldStack from "./WorldStack"
 
+
 // Icons
 import icnAddBlue from "../assets/icn_add_blue.png"
+import icnChatGray from "../assets/icn_chat_gray.png"
 import icnDiaryBlue from "../assets/icn_diary_blue.png"
 import icnSearchBlue from "../assets/icn_search_blue.png"
 import icnSearchGray from "../assets/icn_search_gray.png"
 import icnUserBlue from "../assets/icn_user_blue.png"
 import icnUserGray from "../assets/icn_user_gray.png"
 import icnWorldGray from "../assets/icn_world_gray.png"
+
 
 const { height } = Dimensions.get("window")
 const Tab = createBottomTabNavigator()
@@ -145,7 +149,7 @@ const BottomTabNavigator = () => {
           }}
         />
 
-        {/* Placeholder to preserve tab layout and keep AddPost icon centered */}
+        {/* Placeholder to preserve tab layout and keep AddPost icon centered 
         <Tab.Screen
           name="Placeholder"
           component={() => null}
@@ -155,54 +159,66 @@ const BottomTabNavigator = () => {
             tabBarButton: () => null,
           }}
         />
-
-        <Tab.Screen
-          name="MyProfileScreen"
-          component={MyProfileScreen}
-          options={{
-            tabBarLabel: "",
-            tabBarIcon: ({ focused }) => (
-              <View style={{ alignItems: "center" }}>
-                <Image
-                  source={focused ? icnUserBlue : icnUserGray}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    tintColor: focused ? "#007AFF" : "#333",
-                  }}
-                />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: focused ? "#007AFF" : "#333",
-                    marginTop: 2,
-                  }}
-                >
-                  Profile
-                </Text>
-              </View>
-            ),
-          }}
-        />
-
-        {/*        <Tab.Screen
-          name="Chat"
-          component={MyProfileScreen}
-          options={{
-            tabBarLabel: '',
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={icnChatGray}
-                style={{
-                  width: 28,
-                  height: 28,
-                  tintColor: focused ? '#007AFF' : '#333',
-                }}
-              />
-            ),
-          }}
-        />
         */}
+
+       <Tab.Screen
+  name="Chat"
+  component={ChatScreen} // Replace with actual Chat screen when ready
+  options={{
+    tabBarLabel: "",
+    tabBarIcon: ({ focused }) => (
+      <View style={{ alignItems: "center" }}>
+        <Image
+          source={icnChatGray}
+          style={{
+            width: 28,
+            height: 28,
+            tintColor: focused ? "#007AFF" : "#333",
+          }}
+        />
+        <Text
+          style={{
+            fontSize: 12,
+            color: focused ? "#007AFF" : "#333",
+            marginTop: 2,
+          }}
+        >
+          Chat
+        </Text>
+      </View>
+    ),
+  }}
+/>
+
+<Tab.Screen
+  name="MyProfileScreen"
+  component={MyProfileScreen}
+  options={{
+    tabBarLabel: "",
+    tabBarIcon: ({ focused }) => (
+      <View style={{ alignItems: "center" }}>
+        <Image
+          source={focused ? icnUserBlue : icnUserGray}
+          style={{
+            width: 28,
+            height: 28,
+            tintColor: focused ? "#007AFF" : "#333",
+          }}
+        />
+        <Text
+          style={{
+            fontSize: 12,
+            color: focused ? "#007AFF" : "#333",
+            marginTop: 2,
+          }}
+        >
+          Profile
+        </Text>
+      </View>
+    ),
+  }}
+/>
+
       </Tab.Navigator>
 
       {/* Modal */}

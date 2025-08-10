@@ -3,9 +3,11 @@ import { useFocusEffect } from "@react-navigation/native"
 import React, { useEffect, useState } from "react"
 import { Alert, Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import Icon from "react-native-vector-icons/Feather"
+import ProfileAvatar from "../components/ProfileAvatar"
 import { useAuth } from "../contexts1/AuthContext"
 import { usePostContext } from "../contexts1/PostContext"
 import styles from "../styles/UserProfileStyles"
+
 
 const { width } = Dimensions.get("window")
 
@@ -266,13 +268,17 @@ const UserProfileScreen = ({ route, navigation }) => {
         </View>
 
         {/* Profile */}
-        <View style={styles.emptySquare}>
-          {user.profileImage ? (
-            <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-          ) : (
-            <Text>No Profile Pic</Text>
-          )}
-        </View>
+       <View style={styles.emptySquare}>
+  <ProfileAvatar
+    name={user.fullName}
+    imageUrl={user.profileImage}
+    // make it fill the square and remove inner border/margin
+    style={{ width: "100%", height: "100%", borderRadius: 20 }}
+    innerBorder={false}
+    marginRight={false}
+  />
+</View>
+
 
         <View style={styles.followContainer}>
           <View style={styles.followItem}>
@@ -289,12 +295,29 @@ const UserProfileScreen = ({ route, navigation }) => {
           <Text style={styles.profileName}>{user.fullName}</Text>
           {user.bio ? <Text style={styles.profileBio}>{user.bio}</Text> : null}
           {user.link ? <Text style={styles.profileBio}>{user.link}</Text> : null}
-          <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: isFollowing ? "#ccc" : "#007bff" }]}
-            onPress={toggleFollow}
-          >
-            <Text style={styles.editButtonText}>{isFollowing ? "Following" : "Follow"}</Text>
-          </TouchableOpacity>
+         <View style={styles.actionRow}>
+  <TouchableOpacity
+    style={[styles.editButton, { backgroundColor: isFollowing ? "#ccc" : "#007bff" }]}
+    onPress={toggleFollow}
+  >
+    <Text style={styles.editButtonText}>{isFollowing ? "Following" : "Follow"}</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.chatButton}
+    onPress={() => {
+      navigation.navigate("ChatScreen", { user })
+    }}
+    activeOpacity={0.7}
+  >
+    <Image
+      source={require("../assets/icn_chat_blue.png")}
+      style={styles.chatIcon}
+      resizeMode="contain"
+    />
+  </TouchableOpacity>
+</View>
+
           <View style={styles.divider} />
         </View>
 

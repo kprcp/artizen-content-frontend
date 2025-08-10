@@ -14,8 +14,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
+import ProfileAvatar from "../components/ProfileAvatar"
 import { useAuth } from "../contexts1/AuthContext"
 import { styles as profileStyles } from "../styles/MyProfileStyles"
+
 
 const { width } = Dimensions.get("window")
 
@@ -111,20 +113,12 @@ const SearchScreen = () => {
 
     return (
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("UserProfileScreen", { user: item })}>
-        {currentProfileImage ? (
-          <Image
-            source={{ uri: currentProfileImage }}
-            style={styles.cardImage}
-            resizeMode="cover"
-            key={`${item.email}-${currentProfileImage}`} // ✅ Force re-render when image changes
-          />
-        ) : (
-          <View style={styles.noPicContainer}>
-            <Text style={styles.noPicText}>
-              No{"\n"}Profile{"\n"}Pic
-            </Text>
-          </View>
-        )}
+        <ProfileAvatar
+  name={item.fullName}
+  imageUrl={currentProfileImage}
+  size={70}        // tweak: 60/70/75 to taste
+/>
+
         <View style={styles.cardText}>
           <Text style={styles.fullName}>{item.fullName}</Text>
           {item.bio ? <Text style={styles.bio}>{item.bio}</Text> : null}
