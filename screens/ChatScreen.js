@@ -28,27 +28,27 @@ const ChatScreen = () => {
   // TEMP: sample data — replace with your real inbox threads
   useEffect(() => {
     setThreads([
-      {
-        id: "1",
-        user: {
-          email: "bekir@example.com",
-          fullName: "Bekir Sami Capar",
-          profileImage:
-            "https://placehold.co/100x100?text=B", // swap with real profileImage
-        },
-        lastMessage: "Hey! Are you free to chat later today?",
-        updatedAt: new Date(), // last message time
-      },
-      {
-        id: "2",
-        user: {
-          email: "jane@example.com",
-          fullName: "Jane Doe",
-          profileImage: "",
-        },
-        lastMessage: "Got it, thanks!",
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 26),
-      },
+     // {
+       // id: "1",
+        // user: {
+          // email: "bekir@example.com",
+          // fullName: "Bekir Sami Capar",
+          // profileImage:
+           //  "https://placehold.co/100x100?text=B", // swap with real profileImage
+        // },
+        // lastMessage: "Hey! Are you free to chat later today?",
+        // updatedAt: new Date(), // last message time
+      // },
+      // {
+        //id: "2",
+       // user: {
+         // email: "jane@example.com",
+          //fullName: "Jane Doe",
+          //profileImage: "",
+       // },
+        // lastMessage: "Got it, thanks!",
+        // updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 26),
+      //},
     ])
   }, [])
 
