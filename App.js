@@ -60,7 +60,7 @@ const AppNavigator = () => {
         <Stack.Screen name="PostPage" component={PostPage} />
         <Stack.Screen name="MainApp" component={BottomTabNavigator} />
         <Stack.Screen name="UserProfileScreen" component={UserProfileScreen} />
-        <Stack.Screen name="ChatScreen" component={ChatUserScreen} />
+        <Stack.Screen name="ChatUserScreen" component={ChatUserScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>

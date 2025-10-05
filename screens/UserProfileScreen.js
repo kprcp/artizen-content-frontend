@@ -242,6 +242,56 @@ const UserProfileScreen = ({ route, navigation }) => {
     )
   }
 
+ async function startChatWithUser(other) {
+  try {
+    // Always resolve users from prod auth API (it definitely has this route)
+    const AUTH_API = "https://api.artizen.world"
+    const CHAT_API = getApiUrl() // local or prod, as you already defined
+
+    // 1) resolve my id
+    const meRes = await fetch(`${AUTH_API}/api/auth/get-user-by-email?email=${encodeURIComponent(currentUser.email)}`)
+    const meJson = await meRes.json()
+    const myId = meJson?.user?._id
+
+    // 2) resolve their id
+    const otherRes = await fetch(`${AUTH_API}/api/auth/get-user-by-email?email=${encodeURIComponent(other.email)}`)
+    const otherJson = await otherRes.json()
+    const otherId = otherJson?.user?._id
+
+    if (!myId || !otherId) {
+      console.log("meJson", meJson, "otherJson", otherJson)
+      throw new Error("Could not resolve user ids")
+    }
+
+    // 3) create or reuse a thread on your chat API (local in dev)
+    const tRes = await fetch(`${CHAT_API}/api/chat/threads`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // If your auth middleware sets req.user on CHAT_API, you can remove this header.
+        "X-User-Id": myId,
+      },
+      body: JSON.stringify({ userId: otherId }),
+    })
+    const tJson = await tRes.json()
+    if (!tRes.ok) throw new Error(tJson?.error || `Thread create failed (${tRes.status})`)
+
+    const threadId = tJson?.id || tJson?._id
+    if (!threadId) throw new Error("No thread id returned")
+
+    // 4) navigate to the conversation
+    // If ChatUserScreen is in the root stack (per your App.js after fix):
+    navigation.navigate("ChatUserScreen", { user: otherJson.user, threadId })
+
+    // If you later nest it under a "Chat" tab stack, use:
+    // navigation.navigate("Chat", { screen: "ChatUserScreen", params: { user: otherJson.user, threadId } })
+  } catch (e) {
+    console.error("startChatWithUser error:", e)
+    Alert.alert("Chat error", e.message || "Could not start chat. Please try again.")
+  }
+}
+
+
   if (!user) return null
 
   return (
@@ -250,9 +300,10 @@ const UserProfileScreen = ({ route, navigation }) => {
         height: "100vh",
         overflow: "auto",
         WebkitOverflowScrolling: "touch",
+        
       }}
     >
-      <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: "#ffffff", minHeight: "100%" }]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
@@ -303,19 +354,19 @@ const UserProfileScreen = ({ route, navigation }) => {
     <Text style={styles.editButtonText}>{isFollowing ? "Following" : "Follow"}</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity
-    style={styles.chatButton}
-    onPress={() => {
-      navigation.navigate("ChatScreen", { user })
-    }}
-    activeOpacity={0.7}
-  >
-    <Image
-      source={require("../assets/icn_chat_blue.png")}
-      style={styles.chatIcon}
-      resizeMode="contain"
-    />
-  </TouchableOpacity>
+ <TouchableOpacity
+  style={styles.chatButton}
+  onPress={() => startChatWithUser(user)}
+  activeOpacity={0.7}
+>
+
+  <Image
+    source={require("../assets/icn_chat_blue.png")}
+    style={styles.chatIcon}
+    resizeMode="contain"
+  />
+</TouchableOpacity>
+
 </View>
 
           <View style={styles.divider} />
@@ -323,6 +374,7 @@ const UserProfileScreen = ({ route, navigation }) => {
 
         {/* Posts */}
         <FlatList
+          style={{ backgroundColor: "#ffffff", flexGrow: 1 }} // ← paint list area white
           numColumns={2}
           columnWrapperStyle={{ justifyContent: "flex-start" }}
           data={[...posts.filter((post) => post.userEmail === user.email)].sort(
@@ -331,11 +383,11 @@ const UserProfileScreen = ({ route, navigation }) => {
           keyExtractor={(item) => item.id || item._id}
           renderItem={renderPost}
           ListEmptyComponent={
-            <View style={styles.createPostContainer}>
+             <View style={[styles.createPostContainer, { backgroundColor: "#ffffff" }]}>
               <Text style={styles.createPostText}>No Posts Yet</Text>
             </View>
           }
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={{ paddingBottom: 90, flexGrow: 1 }} // ← lets empty state stretch
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           scrollEnabled={false}
