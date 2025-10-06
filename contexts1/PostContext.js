@@ -1,7 +1,7 @@
 "use client"
 
 // PostContext.js
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext"; // ✅ Import to get current user
 
 const PostContext = createContext()
@@ -61,6 +61,7 @@ export const PostProvider = ({ children }) => {
     fullName: post.fullName || "",
     profileImage: post.profileImage || "",
     userEmail: post.userEmail || "", // ✅ add this line
+    timestamp: post.timestamp || post.createdAt || null, // ✅ keep server timestamp for correct sorting
     likes: Array.isArray(post.likedBy) ? post.likedBy.length : post.likes || 0,
     liked: Array.isArray(post.likedBy) && user ? post.likedBy.includes(user.email) : false,
     likedBy: post.likedBy || [],
@@ -75,6 +76,7 @@ export const PostProvider = ({ children }) => {
     try {
       console.log("🔄 Fetching posts from:", getApiUrl())
       const res = await smartFetch("/api/posts/all")
+      if (!res.ok) throw new Error(`posts/all ${res.status}`)
       const data = await res.json()
       if (Array.isArray(data)) {
         const normalized = data.map(normalizePost)
@@ -85,6 +87,7 @@ export const PostProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("❌ Error fetching posts:", err)
+      setPosts([]) // fail-safe to avoid stale state
     }
   }
 
@@ -184,9 +187,33 @@ export const PostProvider = ({ children }) => {
     }
   }
 
+  //useEffect(() => {
+    //fetchPosts()
+  //}, [user]) // 🔁 Refetch when user changes
+
+// 🔥 Fetch once when the provider mounts (covers cold starts / first load)
   useEffect(() => {
-    fetchPosts()
-  }, [user]) // 🔁 Refetch when user changes
+    fetchPosts().catch(e => console.error("❌ fetch on mount failed:", e))
+  }, [])
+
+  // 🔁 Still refetch when user changes (e.g., login/logout)
+  useEffect(() => {
+    if (user) fetchPosts().catch(() => {})
+  }, [user])
+
+  // 🔄 Optional: refresh when tab gains focus (web)
+  useEffect(() => {
+    const onFocus = () => fetchPosts().catch(() => {})
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onFocus)
+      window.addEventListener?.("focus", onFocus)
+      return () => {
+        document.removeEventListener("visibilitychange", onFocus)
+        window.removeEventListener?.("focus", onFocus)
+      }
+    }
+  }, [])
+
 
   return (
     <PostContext.Provider
