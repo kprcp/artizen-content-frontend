@@ -74,8 +74,18 @@ export const PostProvider = ({ children }) => {
 
   const fetchPosts = async () => {
     try {
+      //console.log("🔄 Fetching posts from:", getApiUrl())
+      //const res = await smartFetch("/api/posts/all")
       console.log("🔄 Fetching posts from:", getApiUrl())
-      const res = await smartFetch("/api/posts/all")
+     // Safari can cache cross-origin GETs aggressively. Bust cache + tell it not to cache.
+     const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`, {
+       cache: "no-store",
+       headers: {
+         "Cache-Control": "no-cache, no-store, must-revalidate",
+         Pragma: "no-cache",
+         Expires: "0",
+       },
+     })
 
       if (!res.ok) throw new Error(`posts/all ${res.status}`)
       const data = await res.json()
