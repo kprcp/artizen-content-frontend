@@ -74,8 +74,19 @@ export const PostProvider = ({ children }) => {
 
   const fetchPosts = async () => {
     try {
-      console.log("🔄 Fetching posts from:", getApiUrl())
-      const res = await smartFetch("/api/posts/all")
+      //console.log("🔄 Fetching posts from:", getApiUrl())
+      //const res = await smartFetch("/api/posts/all")
+       console.log("🔄 Fetching posts from:", getApiUrl())
+     // Safari can cache cross-origin GETs aggressively. Bust cache + tell it not to cache.
+     const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`, {
+       cache: "no-store",
+       headers: {
+         "Cache-Control": "no-cache, no-store, must-revalidate",
+         Pragma: "no-cache",
+         Expires: "0",
+       },
+     })
+
       if (!res.ok) throw new Error(`posts/all ${res.status}`)
       const data = await res.json()
       if (Array.isArray(data)) {
@@ -203,7 +214,12 @@ export const PostProvider = ({ children }) => {
 
   // 🔄 Optional: refresh when tab gains focus (web)
   useEffect(() => {
-    const onFocus = () => fetchPosts().catch(() => {})
+    //const onFocus = () => fetchPosts().catch(() => {})
+    const onFocus = () => {
+     if (typeof document === "undefined" || document.visibilityState === "visible") {
+       fetchPosts().catch(() => {})
+     }
+   }  
     if (typeof document !== "undefined") {
       document.addEventListener("visibilitychange", onFocus)
       window.addEventListener?.("focus", onFocus)
