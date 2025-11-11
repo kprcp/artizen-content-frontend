@@ -88,9 +88,14 @@ export const PostProvider = ({ children }) => {
      //})
 
       
-     const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`, {
-        cache: "no-store",
-      })
+     //const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`, {
+       // cache: "no-store",
+      //})
+      
+      const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`); // keep ts if you like
+      // or even: const res = await smartFetch("/api/posts/all");
+
+
 
       if (!res.ok) throw new Error(`posts/all ${res.status}`)
       const data = await res.json()

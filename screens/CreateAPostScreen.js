@@ -1,10 +1,10 @@
 "use client"
-import { useEffect, useState } from "react"
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useEffect, useState } from "react";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 // import Modal from 'react-modal'; // Commented out for MVP
-import { useAuth } from "../contexts1/AuthContext"
+import { useAuth } from "../contexts1/AuthContext";
 import { usePostContext } from "../contexts1/PostContext"; // ✅ Use PostContext
-import { styles } from "../styles/CreateAPostStyles"
+import { styles } from "../styles/CreateAPostStyles";
 
 // Modal.setAppElement('#root'); // Commented out for MVP
 
@@ -184,6 +184,28 @@ const CreateAPostScreen = ({ navigation }) => {
             {isLoading ? "Creating..." : "Post"} {/* ✅ Show loading text */}
           </Text>
         </TouchableOpacity>
+
+
+             <View style={{ marginTop: 14, alignItems: "center" }}>
+  <Text
+    style={[
+      styles.profileName,     // ✅ same font family + weight
+      { fontSize: 16, lineHeight: 22 }   // ✅ override only the size
+    ]}
+  >
+    Predicted Engagement now on Twitch:{" "}
+    <Text
+      style={[
+        styles.profileName,     // ✅ same font family + weight
+        { fontSize: 16, lineHeight: 22, color: "red" }   // ✅ same size, red color
+      ]}
+    >
+      High
+    </Text>
+  </Text>
+</View>
+
+
 
         {/* ✅ REMOVED: API indicator text */}
       </View>
