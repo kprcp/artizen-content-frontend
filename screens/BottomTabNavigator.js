@@ -262,7 +262,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   bottomSheet: {
-    width: "100%",
+    width: "50%",
+    alignSelf: "center",  
     height: height * 0.33,
     backgroundColor: "#F7F7F7",
     borderTopLeftRadius: 20,
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   centeredBox: {
-    width: "10%",
+    width: "20%",
     height: height * 0.12,
     backgroundColor: "#f0f0f0",
     borderRadius: 15,

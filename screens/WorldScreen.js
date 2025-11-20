@@ -11,13 +11,26 @@ import styles from "../styles/WorldStyles"
 
 
 
+
 const WorldScreen = ({ navigation }) => {
- const { posts, toggleLike, addComment, deleteComment, deletePost, fetchPosts } = usePostContext()
- const { user, setUser } = useAuth()
- const [menuVisibleId, setMenuVisibleId] = useState(null)
- const [activeCommentBox, setActiveCommentBox] = useState(null)
- const [commentText, setCommentText] = useState("")
- const [hasUnread, setHasUnread] = useState(false)
+ const {
+  posts,
+  toggleLike,
+  addComment,
+  deleteComment,
+  deletePost,
+  fetchPosts,
+  loadMorePosts,
+  hasMore,
+  loading,
+} = usePostContext()
+
+const { user, setUser } = useAuth()
+
+const [menuVisibleId, setMenuVisibleId] = useState(null)
+const [activeCommentBox, setActiveCommentBox] = useState(null)
+const [commentText, setCommentText] = useState("")
+const [hasUnread, setHasUnread] = useState(false)
 
 
  // ✅ Smart API URL detection
@@ -67,31 +80,39 @@ const WorldScreen = ({ navigation }) => {
 
 
  useFocusEffect(
-   React.useCallback(() => {
-     const refreshData = async () => {
-       try {
-         const userRes = await fetch(
-           `${getApiUrl()}/api/auth/get-user-by-email?email=${encodeURIComponent(user.email)}`,
-         )
-         const userData = await userRes.json()
-         if (userRes.ok && userData.user) {
-           setUser(userData.user)
-         }
+  React.useCallback(() => {
+    const refreshData = async () => {
+      try {
+        // if user is not ready yet, just load first page of posts and bail
+        if (!user?.email) {
+          await fetchPosts(1, false)
+          return
+        }
 
+        const userRes = await fetch(
+          `${getApiUrl()}/api/auth/get-user-by-email?email=${encodeURIComponent(user.email)}`,
+        )
+        const userData = await userRes.json()
+        if (userRes.ok && userData.user) {
+          setUser(userData.user)
+        }
 
-         const unreadRes = await fetch(`${getApiUrl()}/api/notifications/unread/${user.email}`)
-         const unreadData = await unreadRes.json()
-         if (unreadData.success) {
-           setHasUnread(unreadData.count > 0)
-         }
-       } catch (err) {
-         console.error("❌ Failed to refresh:", err)
-       }
-       fetchPosts()
-     }
-     refreshData()
-   }, [user?.email]),
- )
+        const unreadRes = await fetch(`${getApiUrl()}/api/notifications/unread/${user.email}`)
+        const unreadData = await unreadRes.json()
+        if (unreadData.success) {
+          setHasUnread(unreadData.count > 0)
+        }
+      } catch (err) {
+        console.error("❌ Failed to refresh:", err)
+      }
+
+      // load first page (10 posts)
+      await fetchPosts(1, false)
+    }
+
+    refreshData()
+  }, [user?.email]),
+)
 
 
  const confirmDeletePost = (id) => {
@@ -369,15 +390,50 @@ const WorldScreen = ({ navigation }) => {
 
 
      <FlatList
-       data={posts.filter((post) => user?.following?.includes(post.userEmail) || post.userEmail === user?.email)}
-       renderItem={renderPost}
-       keyExtractor={(item) => item.id || item._id}
-       style={{ flex: 1 }}
-       contentContainerStyle={[styles.feedContainer, { paddingBottom: 80 }]} // optional extra spacing
-       ListEmptyComponent={<Text style={{ marginTop: 50, fontSize: 16, color: "#888" }}>No posts yet.</Text>}
-       keyboardShouldPersistTaps="handled"
-       showsVerticalScrollIndicator={false}
-     />
+  data={posts.filter(
+    (post) => user?.following?.includes(post.userEmail) || post.userEmail === user?.email,
+  )}
+  renderItem={renderPost}
+  keyExtractor={(item) => item.id || item._id}
+  style={{ flex: 1 }}
+  contentContainerStyle={[styles.feedContainer, { paddingBottom: 80 }]}
+  ListEmptyComponent={
+  !loading ? (
+    <Text style={{ marginTop: 50, fontSize: 16, color: "#888" }}>
+      No posts yet.
+    </Text>
+  ) : null
+}
+
+  keyboardShouldPersistTaps="handled"
+  showsVerticalScrollIndicator={false}
+  ListFooterComponent={
+    hasMore ? (
+      <TouchableOpacity
+        onPress={loadMorePosts}
+        disabled={loading}
+        style={{
+          marginTop: 20,
+          marginBottom: 40,
+          alignSelf: "center",
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: "#ccc",
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ marginRight: 6, color: "#333", fontSize: 14 }}>
+          {loading ? "Loading..." : "Load more posts"}
+        </Text>
+        {!loading && <Icon name="chevron-down" size={18} color="#333" />}
+      </TouchableOpacity>
+    ) : null
+  }
+/>
+
    </View>
  )
 }

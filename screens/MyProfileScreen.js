@@ -24,7 +24,16 @@ import { styles } from "../styles/MyProfileStyles"
 const { width } = Dimensions.get("window")
 
 const MyProfileScreen = ({ navigation }) => {
-  const { posts, toggleLike, deletePost, addComment, deleteComment } = usePostContext()
+  const {
+  posts,
+  toggleLike,
+  deletePost,
+  addComment,
+  deleteComment,
+  hasMore,
+  loading,
+  loadMorePosts,
+} = usePostContext()
   const { user, setUser } = useAuth()
   const [imageUri, setImageUri] = useState(null)
   const [activeCommentBox, setActiveCommentBox] = useState(null)
@@ -494,22 +503,50 @@ const MyProfileScreen = ({ navigation }) => {
         </View>
 
         <FlatList
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: "flex-start" }}
-          data={[...posts.filter((p) => p.userEmail === user?.email)].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-          )}
-          keyExtractor={(item) => item.id || item._id}
-          renderItem={renderPost}
-          ListEmptyComponent={
-            <View style={styles.createPostContainer}>
-              <Text style={styles.createPostText}>No Posts Yet</Text>
-            </View>
-          }
-          contentContainerStyle={{ paddingBottom: 90 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        />
+  numColumns={2}
+  columnWrapperStyle={{ justifyContent: "flex-start" }}
+  data={[...posts.filter((p) => p.userEmail === user?.email)].sort(
+    (a, b) => new Date(b.createdAt || b.timestamp) - new Date(a.createdAt || a.timestamp),
+  )}
+  keyExtractor={(item) => item.id || item._id}
+  renderItem={renderPost}
+  ListEmptyComponent={
+    !loading ? (
+      <View style={styles.createPostContainer}>
+        <Text style={styles.createPostText}>No Posts Yet</Text>
+      </View>
+    ) : null
+  }
+  contentContainerStyle={{ paddingBottom: 90 }}
+  keyboardShouldPersistTaps="handled"
+  showsVerticalScrollIndicator={false}
+  ListFooterComponent={
+    hasMore ? (
+      <TouchableOpacity
+        onPress={loadMorePosts}
+        disabled={loading}
+        style={{
+          marginTop: 20,
+          marginBottom: 40,
+          alignSelf: "center",
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: "#ccc",
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ marginRight: 6, color: "#333", fontSize: 14 }}>
+          {loading ? "Loading..." : "Load more posts"}
+        </Text>
+        {!loading && <Icon name="chevron-down" size={18} color="#333" />}
+      </TouchableOpacity>
+    ) : null
+  }
+/>
+
       </View>
     </ScrollView>
   )

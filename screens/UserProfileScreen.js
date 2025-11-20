@@ -24,7 +24,15 @@ const getApiUrl = () => {
 
 const UserProfileScreen = ({ route, navigation }) => {
   const { user: currentUser, setUser } = useAuth() // ✅ include setUser
-  const { posts, toggleLike, addComment, deleteComment } = usePostContext()
+  const {
+  posts,
+  toggleLike,
+  addComment,
+  deleteComment,
+  hasMore,
+  loading,
+  loadMorePosts,
+} = usePostContext()
   const { user: passedUser } = route.params
   const [user, setUserProfile] = useState(passedUser?.email ? passedUser : null)
   const [isFollowing, setIsFollowing] = useState(false)
@@ -373,25 +381,53 @@ const UserProfileScreen = ({ route, navigation }) => {
         </View>
 
         {/* Posts */}
-        <FlatList
-          style={{ backgroundColor: "#ffffff", flexGrow: 1 }} // ← paint list area white
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: "flex-start" }}
-          data={[...posts.filter((post) => post.userEmail === user.email)].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-          )}
-          keyExtractor={(item) => item.id || item._id}
-          renderItem={renderPost}
-          ListEmptyComponent={
-             <View style={[styles.createPostContainer, { backgroundColor: "#ffffff" }]}>
-              <Text style={styles.createPostText}>No Posts Yet</Text>
-            </View>
-          }
-          contentContainerStyle={{ paddingBottom: 90, flexGrow: 1 }} // ← lets empty state stretch
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={false}
-        />
+       <FlatList
+  style={{ backgroundColor: "#ffffff", flexGrow: 1 }}
+  numColumns={2}
+  columnWrapperStyle={{ justifyContent: "flex-start" }}
+  data={[...posts.filter((post) => post.userEmail === user.email)].sort(
+    (a, b) => new Date(b.createdAt || b.timestamp) - new Date(a.createdAt || a.timestamp),
+  )}
+  keyExtractor={(item) => item.id || item._id}
+  renderItem={renderPost}
+  ListEmptyComponent={
+    !loading ? (
+      <View style={[styles.createPostContainer, { backgroundColor: "#ffffff" }]}>
+        <Text style={styles.createPostText}>No Posts Yet</Text>
+      </View>
+    ) : null
+  }
+  contentContainerStyle={{ paddingBottom: 90, flexGrow: 1 }}
+  keyboardShouldPersistTaps="handled"
+  showsVerticalScrollIndicator={false}
+  scrollEnabled={false}   // keep your outer div scrolling; fine to leave
+  ListFooterComponent={
+    hasMore ? (
+      <TouchableOpacity
+        onPress={loadMorePosts}
+        disabled={loading}
+        style={{
+          marginTop: 20,
+          marginBottom: 40,
+          alignSelf: "center",
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: "#ccc",
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ marginRight: 6, color: "#333", fontSize: 14 }}>
+          {loading ? "Loading..." : "Load more posts"}
+        </Text>
+        {!loading && <Icon name="chevron-down" size={18} color="#333" />}
+      </TouchableOpacity>
+    ) : null
+  }
+/>
+
       </View>
     </div>
   )

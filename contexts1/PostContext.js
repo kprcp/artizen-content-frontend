@@ -10,6 +10,11 @@ export const PostProvider = ({ children }) => {
   const { user } = useAuth() // ✅ Get logged-in user
   const [posts, setPosts] = useState([])
 
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
   // ✅ Smart API URL detection - built into PostContext
   const getApiUrl = () => {
     if (typeof window !== "undefined") {
@@ -119,45 +124,66 @@ const smartFetch = async (endpoint, options = {}) => {
     setPosts((prev) => [normalizePost(post), ...prev])
   }
 
-  const fetchPosts = async () => {
-    try {
-      //console.log("🔄 Fetching posts from:", getApiUrl())
-      //const res = await smartFetch("/api/posts/all")
-      console.log("🔄 Fetching posts from:", getApiUrl())
-     // Safari can cache cross-origin GETs aggressively. Bust cache + tell it not to cache.
-     //const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`, {
-      // cache: "no-store",
-       //headers: {
-        // "Cache-Control": "no-cache, no-store, must-revalidate",
-         //Pragma: "no-cache",
-         //Expires: "0",
-       //},
-     //})
+ // page = which page from backend
+// append = whether to keep old posts and add new ones
+const fetchPosts = async (page = 1, append = false) => {
+  if (loading) return;                 // avoid double calls
+  setLoading(true);
 
-      
-     //const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`, {
-       // cache: "no-store",
-      //})
-      
-      const res = await smartFetch(`/api/posts/all?ts=${Date.now()}`); // keep ts if you like
-      // or even: const res = await smartFetch("/api/posts/all");
+  try {
+    // 👇 first load = 10 posts, later loads = 20 posts
+    const limit = 10;   // or 20, if you want 20 per page for *all* pages
 
+    console.log(
+      "🔄 Fetching posts page",
+      page,
+      "limit",
+      limit,
+      "from:",
+      getApiUrl()
+    );
 
+    const res = await smartFetch(
+      `/api/posts/all?page=${page}&limit=${limit}&ts=${Date.now()}`
+    );
 
-      if (!res.ok) throw new Error(`posts/all ${res.status}`)
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        const normalized = data.map(normalizePost)
-        setPosts(normalized)
-        console.log(`✅ Fetched ${normalized.length} posts successfully`)
-      } else {
-        console.warn("⚠️ Unexpected posts response format:", data)
-      }
-    } catch (err) {
-      console.error("❌ Error fetching posts:", err)
-      setPosts([]) // fail-safe to avoid stale state
+    if (!res.ok) throw new Error(`posts/all ${res.status}`);
+
+    const data = await res.json(); // { posts: [...], hasMore: true/false }
+
+    if (Array.isArray(data.posts)) {
+      const normalized = data.posts.map(normalizePost);
+
+      setPosts(prev =>
+        append ? [...prev, ...normalized] : normalized  // ✅ append or replace
+      );
+
+      setCurrentPage(page);
+      setHasMore(!!data.hasMore);
+      console.log(
+        `✅ Fetched ${normalized.length} posts (append=${append}) hasMore=${data.hasMore}`
+      );
+    } else {
+      console.warn("⚠️ Unexpected posts response format:", data);
+      if (!append) setPosts([]);
     }
+  } catch (err) {
+    console.error("❌ Error fetching posts:", err);
+    if (!append) setPosts([]);
+  } finally {
+    setLoading(false);
   }
+};
+
+/* 2️⃣ ADD THIS DIRECTLY UNDER fetchPosts  */
+const loadMorePosts = async () => {
+  if (loading || !hasMore) return;
+
+  const nextPage = currentPage + 1;
+
+  await fetchPosts(nextPage, true);  // append = true
+};
+
 
   const toggleLike = async (id) => {
     if (!user?.email) return
@@ -285,22 +311,30 @@ const smartFetch = async (endpoint, options = {}) => {
 
 
   return (
-    <PostContext.Provider
-      value={{
-        posts,
-        addPost,
-        fetchPosts,
-        toggleLike,
-        deletePost,
-        addComment,
-        deleteComment,
-        createPost, // ✅ NEW: Add createPost to context
-        currentApiUrl: getApiUrl(), // ✅ NEW: Expose current API URL
-      }}
-    >
-      {children}
-    </PostContext.Provider>
-  )
+  <PostContext.Provider
+    value={{
+      posts,
+      addPost,
+      fetchPosts,
+      toggleLike,
+      deletePost,
+      addComment,
+      deleteComment,
+      createPost,
+
+      // 🔽 pagination state & helpers
+      currentPage,
+      hasMore,
+      loading,
+      loadMorePosts,
+
+      currentApiUrl: getApiUrl(),
+    }}
+  >
+    {children}
+  </PostContext.Provider>
+)
+
 }
 
 export const usePostContext = () => useContext(PostContext)
