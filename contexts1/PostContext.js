@@ -22,7 +22,7 @@ export const PostProvider = ({ children }) => {
   }
 
   // ✅ Smart fetch that tries local first, then falls back to production
-  const smartFetch = async (endpoint, options = {}) => {
+ /* const smartFetch = async (endpoint, options = {}) => {
     const apiUrl = getApiUrl()
     const fullUrl = `${apiUrl}${endpoint}`
 
@@ -51,7 +51,54 @@ export const PostProvider = ({ children }) => {
     // Direct production call
     console.log("🌐 Using API:", fullUrl)
     return fetch(fullUrl, options)
+  } */
+
+// ✅ Smart fetch with REAL timeout + fallback to production
+const smartFetch = async (endpoint, options = {}) => {
+  const apiUrl = getApiUrl()
+  const fullUrl = `${apiUrl}${endpoint}`
+
+  // If we're on localhost, try local backend first BUT with a 3s timeout
+  if (apiUrl.includes("localhost")) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      console.log("⏱️ Local backend timed out, aborting:", fullUrl)
+      controller.abort()
+    }, 3000) // 3 seconds
+
+    try {
+      console.log("🔄 Trying local backend:", fullUrl)
+      const response = await fetch(fullUrl, {
+        ...options,
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+
+      if (response.ok) {
+        console.log("✅ Local backend responded successfully")
+        return response
+      } else {
+        console.log("⚠️ Local backend returned non-ok status:", response.status)
+      }
+    } catch (error) {
+      console.log("⚠️ Local backend failed, falling back to production:", error.message)
+    }
+
+    // Fallback to production if local fails or times out
+    const productionUrl = `https://api.artizen.world${endpoint}`
+    console.log("🌐 Using production backend:", productionUrl)
+    return fetch(productionUrl, options)
   }
+
+  // 🌐 On the online site (hostname is NOT localhost):
+  // getApiUrl() returns "https://api.artizen.world", so we use that directly
+  console.log("🌐 Using API:", fullUrl)
+  return fetch(fullUrl, options)
+}
+
+
+////LETS SEE IF THE SPEED WILL CHANGE FOR UPLOADING...
+
 
   // ✅ Normalize post and calculate "liked" based on user
   const normalizePost = (post) => ({
