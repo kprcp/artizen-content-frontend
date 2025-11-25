@@ -4,34 +4,66 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { useCallback, useEffect, useState } from "react"
 import { FlatList, Image, Text, TouchableOpacity, View } from "react-native"
 import io from "socket.io-client"
+import { useAuth } from "../contexts1/AuthContext"
 import { styles } from "../styles/ChatStyles"
 
-const API_BASE = "http://localhost:5001"   // ← your backend base
+
+
+// ✅ Smart API URL function (same logic as other screens)
+const getApiUrl = () => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:5001"
+    }
+  }
+  return "https://api.artizen.world"
+}
+
+const API_BASE = getApiUrl()
 const SOCKET_URL = API_BASE
+
 
 const ChatScreen = () => {
   const navigation = useNavigation()
+  const { user: currentUser } = useAuth()
   const [threads, setThreads] = useState([])
   const [loading, setLoading] = useState(false)
 
   const fetchThreads = useCallback(async () => {
-    try {
-      setLoading(true)
-      // if you use auth, include your Authorization header
-      const res = await fetch(`${API_BASE}/api/chat/threads`, {
-        headers: {
-          // Authorization: `Bearer ${token}`,
-        },
-      })
-      const json = await res.json()
-      setThreads(Array.isArray(json) ? json : [])
-    } catch (e) {
-      console.warn("threads error", e)
-      setThreads([])
-    } finally {
-      setLoading(false)
+  try {
+    if (!currentUser?.email) {
+      console.log("No currentUser.email yet — skipping threads fetch")
+      return
     }
-  }, [])
+
+    setLoading(true)
+
+    const res = await fetch(
+      `${API_BASE}/api/chat/threads?ts=${Date.now()}`, // 🔥 prevents stale caching
+      {
+        headers: {
+          "X-User-Email": currentUser.email,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      }
+    )
+
+    const data = await res.json()
+    console.log("🔥 THREADS RESPONSE FROM BACKEND:", data)
+
+    setThreads(Array.isArray(data) ? data : [])
+  } catch (e) {
+    console.warn("threads error", e)
+    setThreads([])
+  } finally {
+    setLoading(false)
+  }
+}, [currentUser?.email])
+
+
+
 
   // Title keep-as-is
   useEffect(() => {
@@ -64,14 +96,14 @@ const ChatScreen = () => {
 
   // Socket: when any message is created (sent/received), refresh threads so the bar appears
   useEffect(() => {
-    const socket = io(SOCKET_URL, { transports: ["websocket"] })
-    socket.on("connect", () => {})
-    socket.on("message:new", () => {
-      // Any new message anywhere that involves me will be reflected by refetch
-      fetchThreads()
-    })
-    return () => socket.disconnect()
-  }, [fetchThreads])
+  const socket = io(SOCKET_URL, { transports: ["websocket"] })
+
+  socket.on("message:new", () => {
+    fetchThreads()
+  })
+
+  return () => socket.disconnect()
+}, [fetchThreads])
 
   const formatTimestamp = (d) => {
     if (!d) return ""
@@ -89,49 +121,73 @@ const ChatScreen = () => {
     return `${weekday} ${day} ${month} ${year} at ${time}`
   }
 
-  // a thread “counts” if it has a real lastMessage (string or {text})
-  const messageThreads = threads.filter((t) => {
-    const lm = typeof t?.lastMessage === "string" ? t.lastMessage : t?.lastMessage?.text
-    return !!(lm && lm.trim().length > 0)
-  })
+// ✅ Only keep threads that actually have at least one real message
+const messageThreads = threads.filter((t) => {
+  const lm = t.lastMessage
+  const text =
+    (typeof lm === "string" && lm) ||
+    lm?.text ||
+    lm?.[0]?.text // handles array form just in case
+
+  return !!text && text.trim().length > 0
+})
+
 
   const renderItem = ({ item }) => {
-    const { user, lastMessage, updatedAt, id } = item
-    const avatar = user?.profileImage
-    const snippet = typeof lastMessage === "string" ? lastMessage : lastMessage?.text
-    return (
-      <TouchableOpacity
-        style={styles.threadCard}
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate("ChatUserScreen", { user, threadId: id })}
-      >
-        {avatar ? (
-          <Image source={{ uri: avatar }} style={styles.threadImage} resizeMode="cover" />
-        ) : (
-          <View style={styles.noPicContainer}>
-            <Text style={styles.noPicText}>No{"\n"}Profile{"\n"}Pic</Text>
-          </View>
-        )}
+  const { user: otherUser, lastMessage, updatedAt, id } = item
 
-        <View style={styles.threadCenter}>
-          <Text style={styles.threadName} numberOfLines={1}>
-            {user?.fullName || user?.email}
-          </Text>
-          <Text style={styles.threadSnippet} numberOfLines={1}>
-            {snippet}
-          </Text>
+  // Last message snippet
+ const snippet =
+  (typeof lastMessage === "string" && lastMessage) ||
+  lastMessage?.text ||
+  lastMessage?.[0]?.text ||     // handles array form
+  "No messages yet"
+
+
+
+  // ALWAYS show the OTHER USER's identity (your chat partner)
+  const avatar = otherUser?.profileImage
+  const name = otherUser?.fullName || otherUser?.email
+
+  return (
+    <TouchableOpacity
+      style={styles.threadCard}
+      activeOpacity={0.7}
+      onPress={() =>
+        navigation.navigate("ChatUserScreen", { user: otherUser, threadId: id })
+      }
+    >
+      {avatar ? (
+        <Image source={{ uri: avatar }} style={styles.threadImage} resizeMode="cover" />
+      ) : (
+        <View style={styles.noPicContainer}>
+          <Text style={styles.noPicText}>No{"\n"}Profile{"\n"}Pic</Text>
         </View>
+      )}
 
-        <View style={styles.threadRight}>
-          <Text style={styles.threadDate} numberOfLines={2}>
-            {formatTimestamp(updatedAt)}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    )
-  }
+      <View style={styles.threadCenter}>
+        <Text style={styles.threadName} numberOfLines={1}>
+          {name}
+        </Text>
 
-  const keyExtractor = (item) => item.id
+        <Text style={styles.threadSnippet} numberOfLines={1}>
+          {snippet}
+        </Text>
+      </View>
+
+      <View style={styles.threadRight}>
+        <Text style={styles.threadDate} numberOfLines={2}>
+          {formatTimestamp(updatedAt)}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  )
+}
+
+
+ const keyExtractor = (item) => String(item.id)
+
+
 
   return (
     <View style={styles.container}>
@@ -155,14 +211,18 @@ const ChatScreen = () => {
         <View style={styles.chatPlaceholder}>
           <Text style={styles.chatPlaceholderText}>No Chats Yet</Text>
         </View>
-      ) : (
-        <FlatList
-          data={messageThreads}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          contentContainerStyle={styles.threadList}
-        />
+            ) : (
+        <View style={styles.listWrapper}>
+          <FlatList
+            data={messageThreads}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            style={styles.list}
+            contentContainerStyle={styles.threadList}
+          />
+        </View>
       )}
+
     </View>
   )
 }

@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet } from "react-native"
+import { Dimensions, Platform, StyleSheet } from "react-native"
 
 const { width, height } = Dimensions.get("window")
 
@@ -7,7 +7,9 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     justifyContent: "flex-start",
+    ...(Platform.OS === "web" ? { height: "100vh" } : {}),
   },
+
   header: {
     width: "100%",
     height: 70,
@@ -32,23 +34,26 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // ----- NEW: thread list styles (SearchScreen card-like) -----
+  // ----- thread list styles -----
   threadList: {
     paddingHorizontal: 15,
     paddingTop: 20,
+    paddingBottom: 20,
     width: "100%",
+    flexGrow: 1, // ✅ important for RN-web scrolling
   },
+
   threadCard: {
-   flexDirection: "row",
-  alignItems: "center",
-  borderWidth: 1.5,
-  borderColor: "#ddd",
-  borderRadius: 12,
-  padding: 10,
-  marginBottom: 15,
-  backgroundColor: "#ffffff",
-  marginHorizontal: 15, // ✅ this matches SearchScreen spacing
-},
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: "#ffffff",
+    marginHorizontal: 15, // matches SearchScreen spacing
+  },
   threadImage: {
     width: 60,
     height: 60,
@@ -100,7 +105,7 @@ export const styles = StyleSheet.create({
     maxWidth: 140, // wrap onto 2 lines if needed
   },
 
-  // (kept) placeholder styles if you still use them elsewhere
+  // placeholder styles
   chatPlaceholder: {
     flex: 1,
     justifyContent: "center",
@@ -113,7 +118,8 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 40,
   },
-   // ✅ New card style for stretching like SearchScreen
+
+  // card style kept for consistency
   chatCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -123,6 +129,16 @@ export const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     backgroundColor: "#fff",
-    marginHorizontal: 15, // space from edges, like SearchScreen
+    marginHorizontal: 15,
+  },
+
+  // ✅ NEW: wrapper + list styles for scrolling
+  listWrapper: {
+    flex: 1,
+    minHeight: 0, // allow FlatList to overflow & scroll
+  },
+  list: {
+    flex: 1,
+    ...(Platform.OS === "web" ? { overflowY: "auto" } : {}),
   },
 })

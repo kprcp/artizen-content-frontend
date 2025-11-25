@@ -1,12 +1,12 @@
-import { Dimensions, Platform, StyleSheet } from "react-native"
-
-const { height } = Dimensions.get("window")
+import { Platform, StyleSheet } from "react-native"
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    ...(Platform.OS === "web" ? { height: "100vh" } : {}),
   },
+
   header: {
     height: 70,
     backgroundColor: "#F7F7F7",
@@ -32,20 +32,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  chatArea: {
+
+  listWrapper: {
+  flex: 1,
+  minHeight: 0,
+  flexBasis: 0,                 // ✅ web flex bug fix
+  ...(Platform.OS === "web" ? { overflow: "hidden" } : {}),
+},
+
+
+  list: {
     flex: 1,
+  },
+
+  webScroll: {
+    flex: 1,
+    height: "100%",
+    ...(Platform.OS === "web" ? { overflowY: "auto" } : {}),
+  },
+
+  listContent: {
     padding: 15,
+    paddingBottom: 90, // room for input bar
+    flexGrow: 1,
   },
+
   messageWrapper: {
+    width: "100%",
     marginBottom: 10,
-    alignItems: "flex-end", // default to "me"
   },
+
   timestamp: {
     fontSize: 12,
     color: "#999",
     marginBottom: 2,
-    alignSelf: "center",
+    alignSelf: "flex-start",
   },
+
   bubble: {
     maxWidth: "80%",
     padding: 10,
@@ -70,15 +93,20 @@ const styles = StyleSheet.create({
   textOther: {
     color: "#333",
   },
+
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 16 : 10,
-    borderTopWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
-  },
+  height: 70,
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 12,
+  borderTopWidth: 1,
+  borderColor: "#ddd",
+  backgroundColor: "#fff",
+  ...(Platform.OS === "web"
+    ? { position: "sticky", bottom: 0, zIndex: 999 }
+    : {}),
+},
+
   input: {
     flex: 1,
     borderRadius: 20,

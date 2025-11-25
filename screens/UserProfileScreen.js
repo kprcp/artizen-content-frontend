@@ -1,7 +1,18 @@
 "use client"
 import { useFocusEffect } from "@react-navigation/native"
 import React, { useEffect, useState } from "react"
-import { Alert, Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native"
+
 import Icon from "react-native-vector-icons/Feather"
 import ProfileAvatar from "../components/ProfileAvatar"
 import { useAuth } from "../contexts1/AuthContext"
@@ -250,54 +261,42 @@ const UserProfileScreen = ({ route, navigation }) => {
     )
   }
 
- async function startChatWithUser(other) {
+async function startChatWithUser(other) {
   try {
-    // Always resolve users from prod auth API (it definitely has this route)
-    const AUTH_API = "https://api.artizen.world"
-    const CHAT_API = getApiUrl() // local or prod, as you already defined
+    const BASE = getApiUrl()
 
-    // 1) resolve my id
-    const meRes = await fetch(`${AUTH_API}/api/auth/get-user-by-email?email=${encodeURIComponent(currentUser.email)}`)
-    const meJson = await meRes.json()
-    const myId = meJson?.user?._id
+    // ✅ Robust email resolution (currentUser might be a string in localStorage)
+    const myEmail = (currentUser?.email || currentUser || "").trim().toLowerCase()
+    const otherEmail = (other?.email || "").trim().toLowerCase()
 
-    // 2) resolve their id
-    const otherRes = await fetch(`${AUTH_API}/api/auth/get-user-by-email?email=${encodeURIComponent(other.email)}`)
-    const otherJson = await otherRes.json()
-    const otherId = otherJson?.user?._id
-
-    if (!myId || !otherId) {
-      console.log("meJson", meJson, "otherJson", otherJson)
-      throw new Error("Could not resolve user ids")
+    if (!myEmail || !otherEmail) {
+      console.log("❌ Missing emails:", { myEmail, otherEmail, currentUser, other })
+      throw new Error("Missing user emails")
     }
 
-    // 3) create or reuse a thread on your chat API (local in dev)
-    const tRes = await fetch(`${CHAT_API}/api/chat/threads`, {
+    const tRes = await fetch(`${BASE}/api/chat/threads`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // If your auth middleware sets req.user on CHAT_API, you can remove this header.
-        "X-User-Id": myId,
+        "X-User-Email": myEmail,
       },
-      body: JSON.stringify({ userId: otherId }),
+      body: JSON.stringify({ userEmail: otherEmail }),
     })
+
     const tJson = await tRes.json()
     if (!tRes.ok) throw new Error(tJson?.error || `Thread create failed (${tRes.status})`)
 
     const threadId = tJson?.id || tJson?._id
     if (!threadId) throw new Error("No thread id returned")
 
-    // 4) navigate to the conversation
-    // If ChatUserScreen is in the root stack (per your App.js after fix):
-    navigation.navigate("ChatUserScreen", { user: otherJson.user, threadId })
-
-    // If you later nest it under a "Chat" tab stack, use:
-    // navigation.navigate("Chat", { screen: "ChatUserScreen", params: { user: otherJson.user, threadId } })
+    navigation.navigate("ChatUserScreen", { user: other, threadId })
   } catch (e) {
     console.error("startChatWithUser error:", e)
     Alert.alert("Chat error", e.message || "Could not start chat. Please try again.")
   }
 }
+
+
 
 
   if (!user) return null
@@ -363,17 +362,21 @@ const UserProfileScreen = ({ route, navigation }) => {
   </TouchableOpacity>
 
  <TouchableOpacity
-  style={styles.chatButton}
-  onPress={() => startChatWithUser(user)}
+  style={[styles.chatButton, { zIndex: 999, elevation: 999 }]}
   activeOpacity={0.7}
+  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+  onPress={() => {
+    console.log("✅ CHAT ICON PRESSED")
+    startChatWithUser(user)
+  }}
 >
-
   <Image
     source={require("../assets/icn_chat_blue.png")}
     style={styles.chatIcon}
     resizeMode="contain"
   />
 </TouchableOpacity>
+
 
 </View>
 
