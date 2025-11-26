@@ -2,16 +2,7 @@
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { useCallback, useEffect, useRef, useState } from "react"
-import {
-  Animated,
-  Dimensions,
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native"
+import { Animated, Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import io from "socket.io-client"
 import { useAuth } from "../contexts1/AuthContext"
 import { navigate } from "../contexts1/NavigationService"
@@ -32,7 +23,7 @@ import icnUserBlue from "../assets/icn_user_blue.png"
 import icnUserGray from "../assets/icn_user_gray.png"
 import icnWorldGray from "../assets/icn_world_gray.png"
 
-// ✅ Smart API URL
+// ✅ Smart API URL (same logic as Chat/ChatUserScreen)
 const getApiUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname
@@ -57,61 +48,39 @@ const BottomTabNavigator = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current
 
   const [threads, setThreads] = useState([])
-  const [lastReadMap, setLastReadMap] = useState({}) // threadId -> timestamp
 
-  // 🔁 Load last-read map from localStorage on mount
+  // 🕒 last time user opened the Chat tab
+  const [lastSeenChatAt, setLastSeenChatAt] = useState(0)
+
+  // Load lastSeenChatAt from localStorage (web)
   useEffect(() => {
     if (typeof window === "undefined") return
-    try {
-      const raw = window.localStorage.getItem("chatLastRead")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed && typeof parsed === "object") {
-          setLastReadMap(parsed)
-        }
-      }
-    } catch (e) {
-      console.warn("chatLastRead parse error:", e)
+    const raw = window.localStorage.getItem("chatLastSeenAt")
+    if (raw) {
+      const n = parseInt(raw, 10)
+      if (!Number.isNaN(n)) setLastSeenChatAt(n)
     }
   }, [])
 
-  // 🔔 Listen for "thread read" events from ChatUserScreen
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    const handler = (e) => {
-      const tid = e.detail?.threadId
-      const at = e.detail?.at || Date.now()
-      if (!tid) return
-
-      setLastReadMap((prev) => {
-        const next = { ...prev, [tid]: at }
-        try {
-          window.localStorage.setItem("chatLastRead", JSON.stringify(next))
-        } catch {}
-        return next
-      })
+  const saveLastSeenChatAt = (when) => {
+    setLastSeenChatAt(when)
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("chatLastSeenAt", String(when))
     }
+  }
 
-    window.addEventListener("chat-thread-read", handler)
-    return () => window.removeEventListener("chat-thread-read", handler)
-  }, [])
-
-  // 🔁 Fetch threads so we know who sent the last message
+  // 🔁 Fetch threads for unread badge
   const fetchThreads = useCallback(async () => {
     try {
       if (!currentUser?.email) return
 
-      const res = await fetch(
-        `${API_BASE}/api/chat/threads?ts=${Date.now()}`,
-        {
-          headers: {
-            "X-User-Email": currentUser.email,
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        }
-      )
+      const res = await fetch(`${API_BASE}/api/chat/threads?ts=${Date.now()}`, {
+        headers: {
+          "X-User-Email": currentUser.email,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      })
 
       const data = await res.json()
       setThreads(Array.isArray(data) ? data : [])
@@ -138,8 +107,10 @@ const BottomTabNavigator = () => {
     return () => socket.disconnect()
   }, [fetchThreads, currentUser?.email])
 
-  // 🧮 Compute unread count: number of DIFFERENT users whose last message
-  // in their thread is (a) from them (not me) AND (b) newer than my lastReadMap
+  // 🧮 Compute unread count:
+  // number of DIFFERENT users whose last message in their thread is:
+  //  - from THEM (not me)
+  //  - created AFTER lastSeenChatAt
   const unreadSenders = new Set()
 
   threads.forEach((t) => {
@@ -150,7 +121,11 @@ const BottomTabNavigator = () => {
       (typeof lm === "string" && lm) ||
       lm?.text ||
       lm?.[0]?.text
+
     if (!text || !text.trim()) return
+
+    const createdAtMs = new Date(lm.createdAt || t.updatedAt).getTime()
+    if (!createdAtMs || createdAtMs <= lastSeenChatAt) return
 
     const senderEmail =
       lm?.sender?.email ||
@@ -159,20 +134,8 @@ const BottomTabNavigator = () => {
 
     const me = currentUser?.email?.toLowerCase()
     const s = senderEmail?.toLowerCase()
-    if (!me || !s || s === me) return // ignore my own messages
 
-    // ✅ check last-read time for this thread
-    const threadId = t.id || t._id
-    if (threadId) {
-      const lastRead = lastReadMap[threadId]
-      const createdAt = lm.createdAt || lm.time
-      const lmTime = createdAt ? new Date(createdAt).getTime() : 0
-
-      if (lastRead && lmTime && lastRead >= lmTime) {
-        // user has already opened this thread *after* this message
-        return
-      }
-    }
+    if (!me || !s || s === me) return
 
     unreadSenders.add(s)
   })
@@ -208,6 +171,12 @@ const BottomTabNavigator = () => {
         useNativeDriver: true,
       }),
     ]).start(() => setModalVisible(false))
+  }
+
+  // When user taps Chat tab: clear badge by updating lastSeenChatAt
+  const handleChatTabPress = () => {
+    const now = Date.now()
+    saveLastSeenChatAt(now)
   }
 
   return (
@@ -305,6 +274,11 @@ const BottomTabNavigator = () => {
         <Tab.Screen
           name="Chat"
           component={ChatScreen}
+          listeners={{
+            tabPress: () => {
+              handleChatTabPress()
+            },
+          }}
           options={{
             tabBarLabel: "",
             tabBarIcon: ({ focused }) => {
@@ -375,14 +349,10 @@ const BottomTabNavigator = () => {
       </Tab.Navigator>
 
       {/* Modal */}
-      {modalVisible && (
-        <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
-      )}
+      {modalVisible && <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />}
       <Modal transparent visible={modalVisible} animationType="none">
         <View style={styles.modalContainer}>
-          <Animated.View
-            style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
-          >
+          <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}>
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
