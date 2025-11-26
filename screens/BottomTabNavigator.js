@@ -101,41 +101,23 @@ const BottomTabNavigator = () => {
 
 
 
-  
-    // 🧮 Compute unread count: number of DIFFERENT users
-  // whose last message in their thread is from THEM (not me)
-  const unreadSenders = new Set()
+  // 🧮 Unread count = number of threads whose last message
+// has real text AND was NOT sent by me.
+// (Each two-person thread == one “sender”, so this matches your spec.)
+const unreadCount = threads.filter((t) => {
+  const lm = t.lastMessage
+  if (!lm) return false
 
-  threads.forEach((t) => {
-    const lm = t.lastMessage
-    if (!lm) return
+  const text =
+    (typeof lm === "string" && lm) ||
+    lm?.text ||
+    lm?.[0]?.text
 
-    const text =
-      (typeof lm === "string" && lm) ||
-      lm?.text ||
-      lm?.[0]?.text
+  if (!text || !text.trim()) return false
 
-    // ignore threads with no real last message text
-    if (!text || !text.trim()) return
-
-    const senderEmail =
-      lm?.sender?.email ||
-      lm?.senderEmail ||
-      lm?.sender?.senderEmail
-
-    const me = currentUser?.email?.toLowerCase()
-    const s = senderEmail?.toLowerCase()
-
-    // only count if last message is from someone else
-    if (!me || !s) return
-// remove the s === me check → every thread with a last message counts
-unreadSenders.add(s)
-
-    // add this sender to the “unread” set
-    unreadSenders.add(s)
-  })
-
-  const unreadCount = unreadSenders.size
+  // this flag comes from the backend aggregation
+  return !t.lastMessageFromMe
+}).length
 
  // 👇 ADD THIS
   console.log("CHAT BADGE DEBUG", {
