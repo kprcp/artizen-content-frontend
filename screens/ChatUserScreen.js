@@ -28,6 +28,29 @@ const getApiUrl = () => {
   return "https://api.artizen.world"
 }
 
+
+// Mark this thread as read on this device
+const markThreadRead = (threadId) => {
+  if (!threadId) return
+  if (typeof window === "undefined") return
+
+  try {
+    const now = Date.now()
+    const raw = window.localStorage.getItem("chatLastRead")
+    const map = raw ? JSON.parse(raw) : {}
+    map[threadId] = now
+    window.localStorage.setItem("chatLastRead", JSON.stringify(map))
+
+    // notify BottomTabNavigator
+    window.dispatchEvent(
+      new CustomEvent("chat-thread-read", { detail: { threadId, at: now } })
+    )
+  } catch (e) {
+    console.warn("markThreadRead error:", e)
+  }
+}
+
+
 const API_BASE = getApiUrl()
 const SOCKET_URL = API_BASE
 
@@ -37,6 +60,13 @@ const HEADER_HEIGHT = 70
 const ChatUserScreen = ({ route, navigation }) => {
   const { user, threadId } = route.params
   const { user: currentUser } = useAuth()
+
+
+  // 🔵 when user opens this chat, mark it as read
+  useEffect(() => {
+    markThreadRead(threadId)
+  }, [threadId])
+
 
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState([])

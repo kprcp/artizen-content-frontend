@@ -2,19 +2,25 @@
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Animated, Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import {
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native"
 import io from "socket.io-client"
 import { useAuth } from "../contexts1/AuthContext"
 import { navigate } from "../contexts1/NavigationService"
-
-
 
 // Screens
 import ChatScreen from "./ChatScreen"
 import MyProfileScreen from "./MyProfileScreen"
 import SearchStack from "./SearchStack"
 import WorldStack from "./WorldStack"
-
 
 // Icons
 import icnAddBlue from "../assets/icn_add_blue.png"
@@ -26,8 +32,7 @@ import icnUserBlue from "../assets/icn_user_blue.png"
 import icnUserGray from "../assets/icn_user_gray.png"
 import icnWorldGray from "../assets/icn_world_gray.png"
 
-
-// ✅ Smart API URL (same logic as Chat/ChatUserScreen)
+// ✅ Smart API URL
 const getApiUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname
@@ -41,9 +46,6 @@ const getApiUrl = () => {
 const API_BASE = getApiUrl()
 const SOCKET_URL = API_BASE
 
-
-
-
 const { height } = Dimensions.get("window")
 const Tab = createBottomTabNavigator()
 
@@ -55,8 +57,47 @@ const BottomTabNavigator = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current
 
   const [threads, setThreads] = useState([])
+  const [lastReadMap, setLastReadMap] = useState({}) // threadId -> timestamp
 
-    // 🔁 Fetch threads for unread badge
+  // 🔁 Load last-read map from localStorage on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const raw = window.localStorage.getItem("chatLastRead")
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === "object") {
+          setLastReadMap(parsed)
+        }
+      }
+    } catch (e) {
+      console.warn("chatLastRead parse error:", e)
+    }
+  }, [])
+
+  // 🔔 Listen for "thread read" events from ChatUserScreen
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const handler = (e) => {
+      const tid = e.detail?.threadId
+      const at = e.detail?.at || Date.now()
+      if (!tid) return
+
+      setLastReadMap((prev) => {
+        const next = { ...prev, [tid]: at }
+        try {
+          window.localStorage.setItem("chatLastRead", JSON.stringify(next))
+        } catch {}
+        return next
+      })
+    }
+
+    window.addEventListener("chat-thread-read", handler)
+    return () => window.removeEventListener("chat-thread-read", handler)
+  }, [])
+
+  // 🔁 Fetch threads so we know who sent the last message
   const fetchThreads = useCallback(async () => {
     try {
       if (!currentUser?.email) return
@@ -84,9 +125,7 @@ const BottomTabNavigator = () => {
     fetchThreads()
   }, [fetchThreads])
 
-
-   // 🔔 Listen for global new-message events and refresh threads
-    // 🔔 Listen for GLOBAL new-message events and refresh threads
+  // 🔔 Listen for GLOBAL new-message events and refresh threads
   useEffect(() => {
     if (!currentUser?.email) return
 
@@ -99,32 +138,47 @@ const BottomTabNavigator = () => {
     return () => socket.disconnect()
   }, [fetchThreads, currentUser?.email])
 
+  // 🧮 Compute unread count: number of DIFFERENT users whose last message
+  // in their thread is (a) from them (not me) AND (b) newer than my lastReadMap
+  const unreadSenders = new Set()
 
+  threads.forEach((t) => {
+    const lm = t.lastMessage
+    if (!lm) return
 
-  // 🧮 Unread count = number of threads whose last message
-// has real text AND was NOT sent by me.
-// (Each two-person thread == one “sender”, so this matches your spec.)
-const unreadCount = threads.filter((t) => {
-  const lm = t.lastMessage
-  if (!lm) return false
+    const text =
+      (typeof lm === "string" && lm) ||
+      lm?.text ||
+      lm?.[0]?.text
+    if (!text || !text.trim()) return
 
-  const text =
-    (typeof lm === "string" && lm) ||
-    lm?.text ||
-    lm?.[0]?.text
+    const senderEmail =
+      lm?.sender?.email ||
+      lm?.senderEmail ||
+      lm?.sender?.senderEmail
 
-  if (!text || !text.trim()) return false
+    const me = currentUser?.email?.toLowerCase()
+    const s = senderEmail?.toLowerCase()
+    if (!me || !s || s === me) return // ignore my own messages
 
-  // this flag comes from the backend aggregation
-  return !t.lastMessageFromMe
-}).length
+    // ✅ check last-read time for this thread
+    const threadId = t.id || t._id
+    if (threadId) {
+      const lastRead = lastReadMap[threadId]
+      const createdAt = lm.createdAt || lm.time
+      const lmTime = createdAt ? new Date(createdAt).getTime() : 0
 
- // 👇 ADD THIS
-  console.log("CHAT BADGE DEBUG", {
-    currentUserEmail: currentUser?.email,
-    unreadCount,
-    threads,
+      if (lastRead && lmTime && lastRead >= lmTime) {
+        // user has already opened this thread *after* this message
+        return
+      }
+    }
+
+    unreadSenders.add(s)
   })
+
+  const unreadCount = unreadSenders.size
+
   const openModal = () => {
     setModalVisible(true)
     Animated.parallel([
@@ -234,109 +288,101 @@ const unreadCount = threads.filter((t) => {
           listeners={{
             tabPress: (e) => {
               e.preventDefault()
-              openModal() // show modal instead of navigating
+              openModal()
             },
           }}
           options={{
             tabBarLabel: "",
-            tabBarIcon: () => <Image source={icnAddBlue} style={{ width: 50, height: 50, marginBottom: -10 }} />,
+            tabBarIcon: () => (
+              <Image
+                source={icnAddBlue}
+                style={{ width: 50, height: 50, marginBottom: -10 }}
+              />
+            ),
           }}
         />
 
-        {/* Placeholder to preserve tab layout and keep AddPost icon centered 
         <Tab.Screen
-          name="Placeholder"
-          component={() => null}
+          name="Chat"
+          component={ChatScreen}
           options={{
             tabBarLabel: "",
-            tabBarIcon: () => null,
-            tabBarButton: () => null,
+            tabBarIcon: ({ focused }) => {
+              const hasUnread = unreadCount > 0
+              const badgeText =
+                unreadCount > 10 ? "10+" : String(unreadCount || "")
+
+              return (
+                <View style={{ alignItems: "center" }}>
+                  <View style={{ position: "relative" }}>
+                    <Image
+                      source={icnChatGray}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        tintColor: focused ? "#007AFF" : "#333",
+                      }}
+                    />
+                    {hasUnread && (
+                      <View style={styles.chatBadge}>
+                        <Text style={styles.chatBadgeText}>{badgeText}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: focused ? "#007AFF" : "#333",
+                      marginTop: 2,
+                    }}
+                  >
+                    Chat
+                  </Text>
+                </View>
+              )
+            },
           }}
         />
-        */}
 
-               <Tab.Screen
-  name="Chat"
-  component={ChatScreen}
-  options={{
-    tabBarLabel: "",
-    tabBarIcon: ({ focused }) => {
-      const hasUnread = unreadCount > 0
-      const badgeText = unreadCount > 10 ? "10+" : String(unreadCount || "")
-
-      const activeColor = "#007AFF"
-      const inactiveColor = "#333"
-      const tint = focused || hasUnread ? activeColor : inactiveColor
-
-      return (
-        <View style={{ alignItems: "center" }}>
-          <View style={{ position: "relative" }}>
-            <Image
-              source={icnChatGray}
-              style={{
-                width: 28,
-                height: 28,
-                tintColor: tint,
-              }}
-            />
-            {hasUnread && (
-              <View style={styles.chatBadge}>
-                <Text style={styles.chatBadgeText}>{badgeText}</Text>
+        <Tab.Screen
+          name="MyProfileScreen"
+          component={MyProfileScreen}
+          options={{
+            tabBarLabel: "",
+            tabBarIcon: ({ focused }) => (
+              <View style={{ alignItems: "center" }}>
+                <Image
+                  source={focused ? icnUserBlue : icnUserGray}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    tintColor: focused ? "#007AFF" : "#333",
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: focused ? "#007AFF" : "#333",
+                    marginTop: 2,
+                  }}
+                >
+                  Profile
+                </Text>
               </View>
-            )}
-          </View>
-          <Text
-            style={{
-              fontSize: 12,
-              color: tint,
-              marginTop: 2,
-            }}
-          >
-            Chat
-          </Text>
-        </View>
-      )
-    },
-  }}
-/>
-
-
-<Tab.Screen
-  name="MyProfileScreen"
-  component={MyProfileScreen}
-  options={{
-    tabBarLabel: "",
-    tabBarIcon: ({ focused }) => (
-      <View style={{ alignItems: "center" }}>
-        <Image
-          source={focused ? icnUserBlue : icnUserGray}
-          style={{
-            width: 28,
-            height: 28,
-            tintColor: focused ? "#007AFF" : "#333",
+            ),
           }}
         />
-        <Text
-          style={{
-            fontSize: 12,
-            color: focused ? "#007AFF" : "#333",
-            marginTop: 2,
-          }}
-        >
-          Profile
-        </Text>
-      </View>
-    ),
-  }}
-/>
-
       </Tab.Navigator>
 
       {/* Modal */}
-      {modalVisible && <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />}
+      {modalVisible && (
+        <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
+      )}
       <Modal transparent visible={modalVisible} animationType="none">
         <View style={styles.modalContainer}>
-          <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}>
+          <Animated.View
+            style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
+          >
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
@@ -345,7 +391,7 @@ const unreadCount = threads.filter((t) => {
               style={styles.centeredBox}
               onPress={() => {
                 closeModal()
-                navigate("CreateAPostScreen") // ✅ uses global navigation
+                navigate("CreateAPostScreen")
               }}
             >
               <Image source={icnDiaryBlue} style={styles.boxIcon} />
@@ -374,7 +420,7 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     width: "50%",
-    alignSelf: "center",  
+    alignSelf: "center",
     height: height * 0.33,
     backgroundColor: "#F7F7F7",
     borderTopLeftRadius: 20,
@@ -416,7 +462,7 @@ const styles = StyleSheet.create({
     height: 50,
     resizeMode: "contain",
   },
-    chatBadge: {
+  chatBadge: {
     position: "absolute",
     top: -4,
     right: -10,
@@ -433,5 +479,4 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
-
 })
