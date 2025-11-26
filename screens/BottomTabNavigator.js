@@ -2,7 +2,16 @@
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Animated, Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import {
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native"
 import io from "socket.io-client"
 import { useAuth } from "../contexts1/AuthContext"
 import { navigate } from "../contexts1/NavigationService"
@@ -47,40 +56,27 @@ const BottomTabNavigator = () => {
   const slideAnim = useRef(new Animated.Value(height * 0.4)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
 
+  // all threads for badge calculation
   const [threads, setThreads] = useState([])
 
-  // 🕒 last time user opened the Chat tab
-  const [lastSeenChatAt, setLastSeenChatAt] = useState(0)
-
-  // Load lastSeenChatAt from localStorage (web)
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    const raw = window.localStorage.getItem("chatLastSeenAt")
-    if (raw) {
-      const n = parseInt(raw, 10)
-      if (!Number.isNaN(n)) setLastSeenChatAt(n)
-    }
-  }, [])
-
-  const saveLastSeenChatAt = (when) => {
-    setLastSeenChatAt(when)
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("chatLastSeenAt", String(when))
-    }
-  }
+  // timestamp of last time user opened the Chat tab
+  const [lastSeenChatAt, setLastSeenChatAt] = useState(() => Date.now())
 
   // 🔁 Fetch threads for unread badge
   const fetchThreads = useCallback(async () => {
     try {
       if (!currentUser?.email) return
 
-      const res = await fetch(`${API_BASE}/api/chat/threads?ts=${Date.now()}`, {
-        headers: {
-          "X-User-Email": currentUser.email,
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      })
+      const res = await fetch(
+        `${API_BASE}/api/chat/threads?ts=${Date.now()}`,
+        {
+          headers: {
+            "X-User-Email": currentUser.email,
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      )
 
       const data = await res.json()
       setThreads(Array.isArray(data) ? data : [])
@@ -107,10 +103,8 @@ const BottomTabNavigator = () => {
     return () => socket.disconnect()
   }, [fetchThreads, currentUser?.email])
 
-  // 🧮 Compute unread count:
-  // number of DIFFERENT users whose last message in their thread is:
-  //  - from THEM (not me)
-  //  - created AFTER lastSeenChatAt
+  // 🧮 Compute unread count: # of DIFFERENT senders
+  // whose last message is from them (not me) AND newer than lastSeenChatAt
   const unreadSenders = new Set()
 
   threads.forEach((t) => {
@@ -124,9 +118,6 @@ const BottomTabNavigator = () => {
 
     if (!text || !text.trim()) return
 
-    const createdAtMs = new Date(lm.createdAt || t.updatedAt).getTime()
-    if (!createdAtMs || createdAtMs <= lastSeenChatAt) return
-
     const senderEmail =
       lm?.sender?.email ||
       lm?.senderEmail ||
@@ -135,7 +126,13 @@ const BottomTabNavigator = () => {
     const me = currentUser?.email?.toLowerCase()
     const s = senderEmail?.toLowerCase()
 
+    // only if last msg is from someone else
     if (!me || !s || s === me) return
+
+    // only if last msg is newer than last time user opened Chat
+    const createdAtRaw = lm?.createdAt || (Array.isArray(lm) ? lm[0]?.createdAt : null)
+    const createdAtMs = createdAtRaw ? new Date(createdAtRaw).getTime() : 0
+    if (lastSeenChatAt && createdAtMs <= lastSeenChatAt) return
 
     unreadSenders.add(s)
   })
@@ -171,12 +168,6 @@ const BottomTabNavigator = () => {
         useNativeDriver: true,
       }),
     ]).start(() => setModalVisible(false))
-  }
-
-  // When user taps Chat tab: clear badge by updating lastSeenChatAt
-  const handleChatTabPress = () => {
-    const now = Date.now()
-    saveLastSeenChatAt(now)
   }
 
   return (
@@ -276,15 +267,15 @@ const BottomTabNavigator = () => {
           component={ChatScreen}
           listeners={{
             tabPress: () => {
-              handleChatTabPress()
+              // when user taps Chat tab, mark everything as "seen"
+              setLastSeenChatAt(Date.now())
             },
           }}
           options={{
             tabBarLabel: "",
             tabBarIcon: ({ focused }) => {
               const hasUnread = unreadCount > 0
-              const badgeText =
-                unreadCount > 10 ? "10+" : String(unreadCount || "")
+              const badgeText = unreadCount > 10 ? "10+" : String(unreadCount || "")
 
               return (
                 <View style={{ alignItems: "center" }}>
@@ -349,10 +340,14 @@ const BottomTabNavigator = () => {
       </Tab.Navigator>
 
       {/* Modal */}
-      {modalVisible && <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />}
+      {modalVisible && (
+        <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
+      )}
       <Modal transparent visible={modalVisible} animationType="none">
         <View style={styles.modalContainer}>
-          <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}>
+          <Animated.View
+            style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
+          >
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
@@ -434,8 +429,8 @@ const styles = StyleSheet.create({
   },
   chatBadge: {
     position: "absolute",
-    top: -4,
-    right: -10,
+    top: -6,
+    right: -12,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
