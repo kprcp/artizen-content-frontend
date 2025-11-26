@@ -127,7 +127,9 @@ const BottomTabNavigator = () => {
     const s = senderEmail?.toLowerCase()
 
     // only count if last message is from someone else
-    if (!me || !s || s === me) return
+    if (!me || !s) return
+// remove the s === me check → every thread with a last message counts
+unreadSenders.add(s)
 
     // add this sender to the “unread” set
     unreadSenders.add(s)
@@ -135,7 +137,12 @@ const BottomTabNavigator = () => {
 
   const unreadCount = unreadSenders.size
 
-
+ // 👇 ADD THIS
+  console.log("CHAT BADGE DEBUG", {
+    currentUserEmail: currentUser?.email,
+    unreadCount,
+    threads,
+  })
   const openModal = () => {
     setModalVisible(true)
     Animated.parallel([
