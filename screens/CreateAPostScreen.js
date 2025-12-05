@@ -137,7 +137,7 @@ const [isPredicting, setIsPredicting] = useState(false)
     }
   }, [month, year])
 
-  // 🔮 Run AI engagement prediction whenever date changes
+ // 🔮 Run AI engagement prediction whenever date changes
 useEffect(() => {
   const runPrediction = async () => {
     try {
@@ -145,10 +145,27 @@ useEffect(() => {
 
       const targetDate = selectedDate || new Date()
 
-      // 🔑 derive base /api URL from currentApiUrl
-      // dev:  http://localhost:5001/api/posts -> http://localhost:5001/api
-      // prod: https://api.artizen.world/api/posts -> https://api.artizen.world/api
-      const baseApiUrl = currentApiUrl.replace(/\/posts$/, "")
+      // 🔑 Derive a robust /api base URL from currentApiUrl
+      // This works for:
+      // - http://localhost:5001
+      // - http://localhost:5001/api
+      // - http://localhost:5001/api/posts
+      // - https://api.artizen.world/api/posts
+      const deriveBaseApiUrl = (url) => {
+        if (!url) return ""
+        const clean = url.replace(/\/$/, "") // remove trailing slash
+
+        const apiIndex = clean.indexOf("/api")
+        if (apiIndex !== -1) {
+          // keep everything up to and including "/api"
+          return clean.substring(0, apiIndex + 4)
+        }
+        // no "/api" segment – append it
+        return `${clean}/api`
+      }
+
+      const baseApiUrl = deriveBaseApiUrl(currentApiUrl)
+      console.log("Prediction baseApiUrl:", baseApiUrl)
 
       const response = await fetch(`${baseApiUrl}/engagement/predict`, {
         method: "POST",
@@ -182,6 +199,7 @@ useEffect(() => {
 
   runPrediction()
 }, [selectedDate, currentApiUrl])
+
 
 
 
