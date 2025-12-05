@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -147,9 +147,40 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: height * 0.02,
   },
-  createPostText: {
+    createPostText: {
     fontSize: height * 0.018,
     color: '#777',
     fontWeight: '600',
+  },
+
+  // 🔴 NEW: styles for Live / Scheduled buttons
+  filterButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    width: '100%',
+  },
+  filterButton: {
+  paddingVertical: 10,
+  width: width * 0.15,  // 👈 same width for both buttons
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: 'black',
+  backgroundColor: 'white',
+  marginHorizontal: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+  filterButtonActive: {
+    backgroundColor: '#ECECEC', // same gray as header
+    borderColor: '#000',         // keeps black outline
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });

@@ -1,38 +1,44 @@
 "use client"
 import { useEffect, useState } from "react";
+import Modal from "react-modal"; // ✅ RE-ENABLED for date/time picker
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-// import Modal from 'react-modal'; // Commented out for MVP
 import { useAuth } from "../contexts1/AuthContext";
 import { usePostContext } from "../contexts1/PostContext"; // ✅ Use PostContext
 import { styles } from "../styles/CreateAPostStyles";
 
-// Modal.setAppElement('#root'); // Commented out for MVP
+Modal.setAppElement("#root") // ✅ Required for react-modal (web)
+
+// ✅ Date helpers
+const today = new Date()
+const currentYear = today.getFullYear()
 
 const CreateAPostScreen = ({ navigation }) => {
-  // const today = new Date(); // Commented out for MVP
-  // const currentYear = today.getFullYear(); // Commented out for MVP
-
   const { user: currentUser } = useAuth()
   const { createPost, currentApiUrl } = usePostContext() // ✅ Get createPost from context
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [isLoading, setIsLoading] = useState(false) // ✅ Add loading state
+  
+  // ✅ Date/Time selection state
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(null)
+
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
-    const setTitle = () => {
+    const setTitleTab = () => {
       if (typeof document !== "undefined") {
         document.title = "Artizen"
       }
     }
     // Set immediately
-    setTitle()
+    setTitleTab()
     // Set after a small delay to override anything else
-    const timer1 = setTimeout(setTitle, 100)
-    const timer2 = setTimeout(setTitle, 500)
-    const timer3 = setTimeout(setTitle, 1000)
+    const timer1 = setTimeout(setTitleTab, 100)
+    const timer2 = setTimeout(setTitleTab, 500)
+    const timer3 = setTimeout(setTitleTab, 1000)
     // Set on focus (when user clicks on tab)
-    const handleFocus = () => setTitle()
+    const handleFocus = () => setTitleTab()
     window.addEventListener?.("focus", handleFocus)
     // Cleanup
     return () => {
@@ -50,61 +56,112 @@ const CreateAPostScreen = ({ navigation }) => {
     }
   })
 
-  // Date/Time selection state - Commented out for MVP
-  // const [isModalOpen, setIsModalOpen] = useState(false)
-  // const [selectedDate, setSelectedDate] = useState(null)
-  // const [month, setMonth] = useState(today.getMonth())
-  // const [day, setDay] = useState(today.getDate())
-  // const [year, setYear] = useState(today.getFullYear())
-  // const [hour, setHour] = useState('12')
-  // const [minute, setMinute] = useState('00')
-  // const [ampm, setAmpm] = useState('AM')
+ // Use current date/time for defaults
+  const now = new Date()
 
-  // Date/Time helper arrays and functions - Commented out for MVP
-  // const months = ['January','February','March','April','May','June','July','August','September','October','November','December']
-  // const years = Array.from({ length: 20 }, (_, i) => currentYear + i)
-  // const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
-  // const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
-  // const getDaysInMonth = (month, year) => new Date(year, typeof month === 'string' ? months.indexOf(month) + 1 : month + 1, 0).getDate()
-  // const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => String(i + 1).padStart(2, '0'))
+  const [month, setMonth] = useState(now.getMonth())
+  const [day, setDay] = useState(String(now.getDate()).padStart(2, "0"))
+  const [year, setYear] = useState(now.getFullYear())
 
-  // const handleConfirm = () => {
-  //   let finalHour = parseInt(hour)
-  //   if (ampm === 'PM' && finalHour !== 12) finalHour += 12
-  //   if (ampm === 'AM' && finalHour === 12) finalHour = 0
-  //   const finalDate = new Date(year, months.indexOf(month), parseInt(day), finalHour, parseInt(minute))
-  //   setSelectedDate(finalDate)
-  //   setIsModalOpen(false)
-  // }
+  // Convert 24h → 12h format automatically
+  let currentHour = now.getHours()
+  const defaultAmpm = currentHour >= 12 ? "PM" : "AM"
+  currentHour = currentHour % 12
+  if (currentHour === 0) currentHour = 12
 
-  // useEffect(() => {
-  //   const maxDay = getDaysInMonth(month, year)
-  //   if (parseInt(day) > maxDay) {
-  //     setDay(String(maxDay).padStart(2, '0'))
-  //   }
-  // }, [month, year])
+  const [hour, setHour] = useState(String(currentHour).padStart(2, "0"))
+  const [minute, setMinute] = useState(String(now.getMinutes()).padStart(2, "0"))
+  const [ampm, setAmpm] = useState(defaultAmpm)
 
-  // const formatDateTime = (date) => {
-  //   if (!date) return 'Now'
-  //   const formattedMonth = months[date.getMonth()]
-  //   const day = date.getDate()
-  //   const year = date.getFullYear()
-  //   let hour = date.getHours()
-  //   const minute = date.getMinutes().toString().padStart(2, '0')
-  //   const ampm = hour >= 12 ? 'PM' : 'AM'
-  //   hour = hour % 12
-  //   hour = hour ? hour : 12
-  //   return `${formattedMonth} ${day}, ${year}, ${hour}:${minute} ${ampm}`
-  // }
+  // ✅ Date/Time helper arrays and functions (ENABLED)
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ]
+  const years = Array.from({ length: 20 }, (_, i) => currentYear + i)
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"))
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"))
+  const getDaysInMonth = (monthIndexOrName, y) => {
+    const monthIndex =
+      typeof monthIndexOrName === "string" ? months.indexOf(monthIndexOrName) : monthIndexOrName
+    return new Date(y, monthIndex + 1, 0).getDate()
+  }
+  const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) =>
+    String(i + 1).padStart(2, "0"),
+  )
+
+  const handleConfirm = () => {
+  let finalHour = parseInt(hour, 10)
+  if (ampm === "PM" && finalHour !== 12) finalHour += 12
+  if (ampm === "AM" && finalHour === 12) finalHour = 0
+
+  const finalDate = new Date(
+    year,
+    typeof month === "string" ? months.indexOf(month) : month,
+    parseInt(day, 10),
+    finalHour,
+    parseInt(minute, 10),
+  )
+
+  const now = new Date()
+
+  // 🔒 Block past dates/times
+  if (finalDate < now) {
+    alert("Please choose a date and time in the future.")
+    return // 🚫 Do NOT close modal or update selectedDate
+  }
+
+  setSelectedDate(finalDate)
+  setIsModalOpen(false)
+}
+
+
+  useEffect(() => {
+    const maxDay = getDaysInMonth(month, year)
+    if (parseInt(day, 10) > maxDay) {
+      setDay(String(maxDay).padStart(2, "0"))
+    }
+  }, [month, year])
+
+  const formatDateTime = (date) => {
+    if (!date) return "Now"
+    const formattedMonth = months[date.getMonth()]
+    const _day = date.getDate()
+    const _year = date.getFullYear()
+    let _hour = date.getHours()
+    const _minute = date.getMinutes().toString().padStart(2, "0")
+    const _ampm = _hour >= 12 ? "PM" : "AM"
+    _hour = _hour % 12
+    _hour = _hour ? _hour : 12
+    return `${formattedMonth} ${_day}, ${_year}, ${_hour}:${_minute} ${_ampm}`
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Image source={require("../assets/icn_arrow_back.png")} style={styles.backIcon} resizeMode="contain" />
+          <Image
+            source={require("../assets/icn_arrow_back.png")}
+            style={styles.backIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Image source={require("../assets/logo_artizen.png")} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={require("../assets/logo_artizen.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
       </View>
 
@@ -129,13 +186,17 @@ const CreateAPostScreen = ({ navigation }) => {
           maxLength={500}
         />
 
-        {/* Date/Time selection UI - Commented out for MVP */}
-        {/* <View style={styles.dateTimeBox}>
+        {/* ✅ Date/Time selection UI (ENABLED) */}
+        <View style={styles.dateTimeBox}>
           <Text style={styles.nowText}>{formatDateTime(selectedDate)}</Text>
           <TouchableOpacity onPress={() => setIsModalOpen(true)}>
-            <Image source={require('../assets/icn_calender.png')} style={styles.calendarIcon} />
+            <Image
+              source={require("../assets/icn_calender.png")}
+              style={styles.calendarIcon}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
-        </View> */}
+        </View>
 
         <TouchableOpacity
           style={styles.updateButton}
@@ -147,14 +208,21 @@ const CreateAPostScreen = ({ navigation }) => {
 
             setIsLoading(true) // ✅ Set loading
 
-            const postBody = {
-              title,
-              content,
-              date: new Date(), // Always use current date/time for MVP
-              userEmail: currentUser.email,
-              fullName: currentUser.fullName,
-              profileImage: currentUser.profileImage,
-            }
+            const now = new Date()
+
+const postBody = {
+  title,
+  content,
+
+  // 🔑 KEY PART: this is the “go live at” time
+  timestamp: (selectedDate || now).toISOString(),
+
+  userEmail: currentUser.email,
+  fullName: currentUser.fullName,
+  profileImage: currentUser.profileImage,
+}
+
+
 
             try {
               console.log("🚀 Creating post with API URL:", currentApiUrl)
@@ -164,6 +232,8 @@ const CreateAPostScreen = ({ navigation }) => {
               // Clear form
               setTitle("")
               setContent("")
+              // Optionally clear scheduled date as well
+              setSelectedDate(null)
 
               navigation.navigate("PostPage", {
                 title,
@@ -185,77 +255,88 @@ const CreateAPostScreen = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
 
-
-             <View style={{ marginTop: 14, alignItems: "center" }}>
-  <Text
-    style={[
-      styles.profileName,     // ✅ same font family + weight
-      { fontSize: 16, lineHeight: 22 }   // ✅ override only the size
-    ]}
-  >
-    Predicted Engagement now on Twitch:{" "}
-    <Text
-      style={[
-        styles.profileName,     // ✅ same font family + weight
-        { fontSize: 16, lineHeight: 22, color: "red" }   // ✅ same size, red color
-      ]}
-    >
-      High
-    </Text>
-  </Text>
-</View>
-
-
+        <View style={{ marginTop: 14, alignItems: "center" }}>
+          <Text
+            style={[
+              styles.profileName, // ✅ same font family + weight
+              { fontSize: 16, lineHeight: 22 }, // ✅ override only the size
+            ]}
+          >
+            Predicted Engagement now on Twitch:{" "}
+            <Text
+              style={[
+                styles.profileName, // ✅ same font family + weight
+                { fontSize: 16, lineHeight: 22, color: "red" }, // ✅ same size, red color
+              ]}
+            >
+              High
+            </Text>
+          </Text>
+        </View>
 
         {/* ✅ REMOVED: API indicator text */}
       </View>
 
-      {/* Date/Time selection Modal - Commented out for MVP */}
-      {/* <Modal
+      {/* ✅ Date/Time selection Modal (ENABLED for web) */}
+      <Modal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         style={{
           content: {
             maxWidth: 650,
-            margin: 'auto',
+            margin: "auto",
             borderRadius: 10,
             padding: 20,
-            backgroundColor: '#fff',
-            border: '1px solid #ccc',
-            display: 'flex',
-            flexDirection: 'column',
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            display: "flex",
+            flexDirection: "column",
             gap: 20,
-            position: 'relative'
+            position: "relative",
           },
           overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
           },
         }}
       >
         <TouchableOpacity
-          style={{ position: 'absolute', top: 10, right: 15, zIndex: 10 }}
+          style={{ position: "absolute", top: 10, right: 15, zIndex: 10 }}
           onPress={() => setIsModalOpen(false)}
         >
-          <Text style={{ fontSize: 22, fontWeight: 'bold' }}>×</Text>
+          <Text style={{ fontSize: 22, fontWeight: "bold" }}>×</Text>
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Select Date</Text>
         <View style={styles.row}>
-          <select value={month} onChange={(e) => setMonth(e.target.value)} style={styles.select}>
+          <select
+            value={typeof month === "string" ? month : months[month]}
+            onChange={(e) => setMonth(e.target.value)}
+            style={styles.select}
+          >
             {months.map((m) => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>
+                {m}
+              </option>
             ))}
           </select>
           <Text style={styles.separator}>/</Text>
           <select value={day} onChange={(e) => setDay(e.target.value)} style={styles.select}>
             {days.map((d) => (
-              <option key={d} value={d}>{d}</option>
+              <option key={d} value={d}>
+                {d}
+              </option>
             ))}
           </select>
           <Text style={styles.separator}>/</Text>
-          <select value={year} onChange={(e) => setYear(parseInt(e.target.value))} style={styles.select}>
+          <select
+            value={year}
+            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+            style={styles.select}
+          >
             {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={y}>
+                {y}
+              </option>
             ))}
           </select>
         </View>
@@ -264,23 +345,33 @@ const CreateAPostScreen = ({ navigation }) => {
         <View style={styles.row}>
           <select value={hour} onChange={(e) => setHour(e.target.value)} style={styles.select}>
             {hours.map((h) => (
-              <option key={h} value={h}>{h}</option>
+              <option key={h} value={h}>
+                {h}
+              </option>
             ))}
           </select>
           <Text style={styles.separator}>:</Text>
           <select value={minute} onChange={(e) => setMinute(e.target.value)} style={styles.select}>
             {minutes.map((m) => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>
+                {m}
+              </option>
             ))}
           </select>
-          <select value={ampm} onChange={(e) => setAmpm(e.target.value)} style={styles.select}>
+          <select
+            value={ampm}
+            onChange={(e) => setAmpm(e.target.value)}
+            style={styles.select}
+          >
             <option value="AM">AM</option>
             <option value="PM">PM</option>
           </select>
         </View>
 
-        <button onClick={handleConfirm} style={styles.confirmButton}>Select</button>
-      </Modal> */}
+        <button onClick={handleConfirm} style={styles.confirmButton}>
+          Select
+        </button>
+      </Modal>
     </View>
   )
 }

@@ -370,6 +370,28 @@ const [hasUnread, setHasUnread] = useState(false)
  }
 
 
+  // 🔑 Only show posts that are "live" (timestamp <= now)
+  const now = new Date()
+
+  const visibleWorldPosts = posts
+    // 1️⃣ Only posts from people I follow OR myself
+    .filter(
+      (post) =>
+        user?.following?.includes(post.userEmail) || post.userEmail === user?.email,
+    )
+    // 2️⃣ Only posts whose scheduled time has passed
+    .filter((post) => {
+      const postTime = new Date(post.timestamp || post.createdAt || post.date)
+      return postTime <= now
+    })
+    // 3️⃣ Sort newest first (by timestamp / createdAt / date)
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp || b.createdAt || b.date) -
+        new Date(a.timestamp || a.createdAt || a.date),
+    )
+
+
  return (
    <View style={styles.container}>
      <View style={styles.header}>
@@ -390,14 +412,12 @@ const [hasUnread, setHasUnread] = useState(false)
 
 
      <FlatList
-  data={posts.filter(
-    (post) => user?.following?.includes(post.userEmail) || post.userEmail === user?.email,
-  )}
-  renderItem={renderPost}
-  keyExtractor={(item) => item.id || item._id}
-  style={{ flex: 1 }}
-  contentContainerStyle={[styles.feedContainer, { paddingBottom: 80 }]}
-  ListEmptyComponent={
+    data={visibleWorldPosts}
+    renderItem={renderPost}
+    keyExtractor={(item) => item.id || item._id}
+    style={{ flex: 1 }}
+    contentContainerStyle={[styles.feedContainer, { paddingBottom: 80 }]}
+    ListEmptyComponent={
   !loading ? (
     <Text style={{ marginTop: 50, fontSize: 16, color: "#888" }}>
       No posts yet.

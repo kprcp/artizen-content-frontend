@@ -23,6 +23,33 @@ import { styles } from "../styles/MyProfileStyles"
 
 const { width } = Dimensions.get("window")
 
+const formatScheduledDate = (raw) => {
+  if (!raw) return ""
+
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ""
+
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ]
+
+  const monthName = months[d.getMonth()]
+  const day = d.getDate()
+  const year = d.getFullYear()
+
+  let hours = d.getHours()
+  const minutes = String(d.getMinutes()).padStart(2, "0")
+  const ampm = hours >= 12 ? "pm" : "am"
+
+  hours = hours % 12
+  if (hours === 0) hours = 12
+
+  // 👉 Example: April 5 2025, at 11.25pm
+  return `${monthName} ${day} ${year}, at ${hours}.${minutes}${ampm}`
+}
+
+
 const MyProfileScreen = ({ navigation }) => {
   const {
   posts,
@@ -43,6 +70,8 @@ const MyProfileScreen = ({ navigation }) => {
   const [menuVisibleId, setMenuVisibleId] = useState(null)
   // ✅ Add loading states like EditProfileScreen
   const [imageUploading, setImageUploading] = useState(false)
+  const [selectedTab, setSelectedTab] = useState("Live")
+
 
   // ✅ Smart API URL detection - same as EditProfileScreen and PostContext
   const getApiUrl = () => {
@@ -317,7 +346,7 @@ const MyProfileScreen = ({ navigation }) => {
     confirmDelete(id) // Then show confirmation
   }
 
-  const renderPost = ({ item }) => {
+    const renderPost = ({ item }) => {
     const isCommentBoxActive = activeCommentBox === item._id
 
     return (
@@ -343,8 +372,16 @@ const MyProfileScreen = ({ navigation }) => {
         <Text style={postStyles.postContent}>{item.content}</Text>
 
         <View style={postStyles.iconRow}>
-          <TouchableOpacity style={postStyles.iconButton} onPress={() => toggleLike(item.id || item._id)}>
-            <Icon name="thumbs-up" size={20} color={item.liked ? "#007AFF" : "#555"} style={{ marginRight: 6 }} />
+          <TouchableOpacity
+            style={postStyles.iconButton}
+            onPress={() => toggleLike(item.id || item._id)}
+          >
+            <Icon
+              name="thumbs-up"
+              size={20}
+              color={item.liked ? "#007AFF" : "#555"}
+              style={{ marginRight: 6 }}
+            />
             <Text style={[postStyles.iconLabel, { color: item.liked ? "#007AFF" : "#555" }]}>
               Like{item.likes > 0 ? ` (${item.likes})` : ""}
             </Text>
@@ -402,7 +439,9 @@ const MyProfileScreen = ({ navigation }) => {
                       style={{ position: "absolute", top: 6, right: 6, padding: 2 }}
                       onPress={() =>
                         setMenuVisibleId(
-                          menuVisibleId === `comment-${item._id}-${idx}` ? null : `comment-${item._id}-${idx}`,
+                          menuVisibleId === `comment-${item._id}-${idx}`
+                            ? null
+                            : `comment-${item._id}-${idx}`,
                         )
                       }
                     >
@@ -427,9 +466,35 @@ const MyProfileScreen = ({ navigation }) => {
             ))}
           </>
         )}
+
+        {/* ⭐ NEW: Scheduled label */}
+        {selectedTab === "Scheduled" && (
+          <Text style={postStyles.scheduledLabel}>
+            Scheduled for{" "}
+            {formatScheduledDate(item.timestamp || item.createdAt || item.date)}
+          </Text>
+        )}
       </View>
     )
   }
+
+   // 🔑 Split posts into Live vs Scheduled based on timestamp
+  const now = new Date()
+
+  const myPostsSorted = [...posts.filter((p) => p.userEmail === user?.email)].sort(
+    (a, b) =>
+      new Date(b.timestamp || b.createdAt || b.date) -
+      new Date(a.timestamp || a.createdAt || a.date),
+  )
+
+  const filteredPosts = myPostsSorted.filter((p) => {
+    const postTime = new Date(p.timestamp || p.createdAt || p.date)
+    if (selectedTab === "Live") {
+      return postTime <= now   // live if time has passed
+    } else {
+      return postTime > now    // scheduled if in the future
+    }
+  })
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -501,13 +566,33 @@ const MyProfileScreen = ({ navigation }) => {
 
           <View style={styles.divider} />
         </View>
+{/* 🔴 NEW: Live / Scheduled buttons right below the divider */}
+        <View style={styles.filterButtonsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              selectedTab === "Live" && styles.filterButtonActive,
+            ]}
+            onPress={() => setSelectedTab("Live")}
+          >
+            <Text style={styles.filterButtonText}>Live</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              selectedTab === "Scheduled" && styles.filterButtonActive,
+            ]}
+            onPress={() => setSelectedTab("Scheduled")}
+          >
+            <Text style={styles.filterButtonText}>Scheduled</Text>
+          </TouchableOpacity>
+        </View>
 
         <FlatList
   numColumns={2}
   columnWrapperStyle={{ justifyContent: "flex-start" }}
-  data={[...posts.filter((p) => p.userEmail === user?.email)].sort(
-    (a, b) => new Date(b.createdAt || b.timestamp) - new Date(a.createdAt || a.timestamp),
-  )}
+  data={filteredPosts}
   keyExtractor={(item) => item.id || item._id}
   renderItem={renderPost}
   ListEmptyComponent={
@@ -582,6 +667,13 @@ const postStyles = StyleSheet.create({
     color: "#555",
     marginBottom: 10,
   },
+    scheduledLabel: {
+    marginTop: 8,
+    alignSelf: "flex-end",
+    fontSize: 12,
+    color: "#777",
+  },
+
   iconRow: {
     flexDirection: "row",
     marginTop: 8,
