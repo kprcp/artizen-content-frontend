@@ -145,26 +145,24 @@ useEffect(() => {
 
       const targetDate = selectedDate || new Date()
 
-      // 🔑 Derive a robust /api base URL from currentApiUrl
-      // This works for:
-      // - http://localhost:5001
-      // - http://localhost:5001/api
-      // - http://localhost:5001/api/posts
-      // - https://api.artizen.world/api/posts
-      const deriveBaseApiUrl = (url) => {
-        if (!url) return ""
-        const clean = url.replace(/\/$/, "") // remove trailing slash
+      // 🔑 Decide backend base URL based ONLY on hostname
+      let baseApiUrl = ""
 
-        const apiIndex = clean.indexOf("/api")
-        if (apiIndex !== -1) {
-          // keep everything up to and including "/api"
-          return clean.substring(0, apiIndex + 4)
+      if (typeof window !== "undefined") {
+        const host = window.location.hostname
+
+        if (host === "localhost" || host === "127.0.0.1") {
+          // Local dev
+          baseApiUrl = "http://localhost:5001/api"
+        } else {
+          // Production (artizen.world)
+          baseApiUrl = "https://api.artizen.world/api"
         }
-        // no "/api" segment – append it
-        return `${clean}/api`
+      } else {
+        // SSR/fallback – default to production API
+        baseApiUrl = "https://api.artizen.world/api"
       }
 
-      const baseApiUrl = deriveBaseApiUrl(currentApiUrl)
       console.log("Prediction baseApiUrl:", baseApiUrl)
 
       const response = await fetch(`${baseApiUrl}/engagement/predict`, {
@@ -198,7 +196,8 @@ useEffect(() => {
   }
 
   runPrediction()
-}, [selectedDate, currentApiUrl])
+}, [selectedDate]) // 👈 note: currentApiUrl removed from deps
+
 
 
 
