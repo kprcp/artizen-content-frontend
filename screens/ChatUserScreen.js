@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -10,12 +11,17 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-} from "react-native"
+  View
+} from "react-native";
+import Icon from "react-native-vector-icons/Feather"; // ✅ add this
 
-import io from "socket.io-client"
-import { useAuth } from "../contexts1/AuthContext"
-import styles from "../styles/ChatUserStyles"
+
+import io from "socket.io-client";
+import { useAuth } from "../contexts1/AuthContext";
+import styles from "../styles/ChatUserStyles";
+
+
+
 
 // ✅ Smart API URL
 const getApiUrl = () => {
@@ -29,19 +35,15 @@ const getApiUrl = () => {
 }
 
 
-// Mark this thread as read on this device
+// Mark this thread as read on this device (in-memory only)
 const markThreadRead = (threadId) => {
   if (!threadId) return
   if (typeof window === "undefined") return
 
   try {
     const now = Date.now()
-    const raw = window.localStorage.getItem("chatLastRead")
-    const map = raw ? JSON.parse(raw) : {}
-    map[threadId] = now
-    window.localStorage.setItem("chatLastRead", JSON.stringify(map))
+    console.log("🟢 markThreadRead fired for", threadId, "at", now)
 
-    // notify BottomTabNavigator
     window.dispatchEvent(
       new CustomEvent("chat-thread-read", { detail: { threadId, at: now } })
     )
@@ -49,6 +51,8 @@ const markThreadRead = (threadId) => {
     console.warn("markThreadRead error:", e)
   }
 }
+
+
 
 
 const API_BASE = getApiUrl()
@@ -74,37 +78,100 @@ const ChatUserScreen = ({ route, navigation }) => {
   const flatListRef = useRef(null)
   const scrollViewRef = useRef(null)
   const localIdRef = useRef(0)
+  const [oldestCursor, setOldestCursor] = useState(null) // _id of oldest loaded
+  const [hasMore, setHasMore] = useState(false)          // are there older messages?
+  const [loadingMore, setLoadingMore] = useState(false)
 
-  // ✅ Load messages from backend
   const fetchMessages = useCallback(async () => {
-    if (!threadId) return
-    if (!currentUser?.email) return
+  if (!threadId) return
+  if (!currentUser?.email) return
 
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/chat/threads/${threadId}/messages?ts=${Date.now()}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-User-Email": currentUser.email,
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        }
-      )
+  try {
+    // first page: latest 10 (no cursor)
+    const res = await fetch(
+      `${API_BASE}/api/chat/threads/${threadId}/messages?take=10&ts=${Date.now()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Email": currentUser.email,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      }
+    )
 
-      const json = await res.json()
-      setMessages(Array.isArray(json) ? json : [])
+    const json = await res.json()
+    const list = Array.isArray(json) ? json : []
 
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd?.({ animated: true })
-        scrollViewRef.current?.scrollToEnd?.({ animated: false })
-      }, 50)
-    } catch (e) {
-      console.warn("fetchMessages error", e)
-      setMessages([])
+    setMessages(list)
+
+    if (list.length > 0) {
+      const oldest = list[0]
+      setOldestCursor(oldest._id || oldest.id || null)
+    } else {
+      setOldestCursor(null)
     }
-  }, [threadId, currentUser?.email])
+
+    // if we got a full page, assume there might be more
+    setHasMore(list.length === 10)
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd?.({ animated: true })
+      scrollViewRef.current?.scrollToEnd?.({ animated: false })
+    }, 50)
+  } catch (e) {
+    console.warn("fetchMessages error", e)
+    setMessages([])
+    setOldestCursor(null)
+    setHasMore(false)
+  }
+}, [threadId, currentUser?.email])
+
+
+const loadOlderMessages = useCallback(async () => {
+  if (!threadId) return
+  if (!currentUser?.email) return
+  if (!oldestCursor) return
+  if (loadingMore) return
+
+  try {
+    setLoadingMore(true)
+
+    const res = await fetch(
+      `${API_BASE}/api/chat/threads/${threadId}/messages?take=10&cursor=${oldestCursor}&ts=${Date.now()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Email": currentUser.email,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      }
+    )
+
+    const json = await res.json()
+    const older = Array.isArray(json) ? json : []
+
+    if (older.length > 0) {
+      const newOldest = older[0]
+      setOldestCursor(newOldest._id || newOldest.id || oldestCursor)
+
+      // prepend older messages
+      setMessages((prev) => [...older, ...prev])
+    }
+
+    // if fewer than 10 came back, there is nothing more to load
+    if (older.length < 10) {
+      setHasMore(false)
+    }
+  } catch (e) {
+    console.warn("loadOlderMessages error", e)
+  } finally {
+    setLoadingMore(false)
+  }
+}, [threadId, currentUser?.email, oldestCursor, loadingMore])
+
+
 
   useEffect(() => {
     fetchMessages()
@@ -274,25 +341,53 @@ const ChatUserScreen = ({ route, navigation }) => {
 
   const MessagesArea = () => {
     if (Platform.OS === "web") {
-      return (
-        <View style={styles.listWrapper}>
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.webScroll}
-            contentContainerStyle={styles.listContent}
-            onContentSizeChange={() =>
-              scrollViewRef.current?.scrollToEnd({ animated: false })
-            }
-          >
-            {messages.map((m) => (
-              <View key={m._id || m.id || m.localId}>
-                {renderMessage({ item: m })}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )
-    }
+  return (
+    <View style={styles.listWrapper}>
+     <ScrollView
+  ref={scrollViewRef}
+  style={styles.webScroll}
+  contentContainerStyle={styles.listContent}
+>
+  {hasMore && (
+    <TouchableOpacity
+      onPress={loadOlderMessages}
+      disabled={loadingMore}
+      style={styles.loadMoreButton}
+    >
+      <Text style={styles.loadMoreText}>
+        {loadingMore ? "Loading..." : "See earlier messages"}
+      </Text>
+      {!loadingMore && <Icon name="chevron-up" size={18} color="#333" />}
+    </TouchableOpacity>
+  )}
+
+  {messages.map((m) => (
+    <View key={m._id || m.id || m.localId}>
+      {renderMessage({ item: m })}
+    </View>
+  ))}
+</ScrollView>
+
+    </View>
+  )
+}
+
+
+  // ✅ When this conversation screen is focused, mark this thread as "read"
+  useFocusEffect(
+    useCallback(() => {
+      if (typeof window !== "undefined" && threadId && currentUser?.email) {
+        window.localStorage.setItem(
+          `threadRead:${threadId}`,
+          String(Date.now())
+        )
+      }
+    }, [threadId, currentUser?.email])
+  )
+
+
+
+
 
     return (
       <View style={styles.listWrapper}>

@@ -39,6 +39,23 @@ const styles = StyleSheet.create({
   flexBasis: 0,                 // ✅ web flex bug fix
   ...(Platform.OS === "web" ? { overflow: "hidden" } : {}),
 },
+loadMoreButton: {
+  marginTop: 12,
+  marginBottom: 12,
+  alignSelf: "center",
+  paddingHorizontal: 18,
+  paddingVertical: 10,
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: "#ccc",
+  flexDirection: "row",
+  alignItems: "center",
+},
+loadMoreText: {
+  marginRight: 6,
+  color: "#333",
+  fontSize: 14,
+},
 
 
   list: {
@@ -52,10 +69,9 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    padding: 15,
-    paddingBottom: 90, // room for input bar
-    flexGrow: 1,
-  },
+  paddingVertical: 10,
+  paddingHorizontal: 16,  
+},
 
   messageWrapper: {
     width: "100%",
@@ -128,5 +144,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 })
+
+
 
 export default styles

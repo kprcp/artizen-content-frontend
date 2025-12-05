@@ -7,8 +7,6 @@ import io from "socket.io-client"
 import { useAuth } from "../contexts1/AuthContext"
 import { styles } from "../styles/ChatStyles"
 
-
-
 // ✅ Smart API URL function (same logic as other screens)
 const getApiUrl = () => {
   if (typeof window !== "undefined") {
@@ -23,7 +21,6 @@ const getApiUrl = () => {
 const API_BASE = getApiUrl()
 const SOCKET_URL = API_BASE
 
-
 const ChatScreen = () => {
   const navigation = useNavigation()
   const { user: currentUser } = useAuth()
@@ -31,39 +28,37 @@ const ChatScreen = () => {
   const [loading, setLoading] = useState(false)
 
   const fetchThreads = useCallback(async () => {
-  try {
-    if (!currentUser?.email) {
-      console.log("No currentUser.email yet — skipping threads fetch")
-      return
-    }
-
-    setLoading(true)
-
-    const res = await fetch(
-      `${API_BASE}/api/chat/threads?ts=${Date.now()}`, // 🔥 prevents stale caching
-      {
-        headers: {
-          "X-User-Email": currentUser.email,
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
+    try {
+      if (!currentUser?.email) {
+        console.log("No currentUser.email yet — skipping threads fetch")
+        return
       }
-    )
 
-    const data = await res.json()
-    console.log("🔥 THREADS RESPONSE FROM BACKEND:", data)
+      setLoading(true)
 
-    setThreads(Array.isArray(data) ? data : [])
-  } catch (e) {
-    console.warn("threads error", e)
-    setThreads([])
-  } finally {
-    setLoading(false)
-  }
-}, [currentUser?.email])
+      const res = await fetch(
+        `${API_BASE}/api/chat/threads?ts=${Date.now()}`,
+        {
+          headers: {
+            "X-User-Email": currentUser.email,
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      )
 
+      const data = await res.json()
+      console.log("🔥 THREADS RESPONSE FROM BACKEND:", data)
 
-
+      const safe = Array.isArray(data) ? data : []
+      setThreads(safe)
+    } catch (e) {
+      console.warn("threads error", e)
+      setThreads([])
+    } finally {
+      setLoading(false)
+    }
+  }, [currentUser?.email])
 
   // Title keep-as-is
   useEffect(() => {
@@ -96,14 +91,14 @@ const ChatScreen = () => {
 
   // Socket: when any message is created (sent/received), refresh threads so the bar appears
   useEffect(() => {
-  const socket = io(SOCKET_URL, { transports: ["websocket"] })
+    const socket = io(SOCKET_URL, { transports: ["websocket"] })
 
-  socket.on("message:new", () => {
-    fetchThreads()
-  })
+    socket.on("message:new-global", () => {
+      fetchThreads()
+    })
 
-  return () => socket.disconnect()
-}, [fetchThreads])
+    return () => socket.disconnect()
+  }, [fetchThreads])
 
   const formatTimestamp = (d) => {
     if (!d) return ""
@@ -121,73 +116,65 @@ const ChatScreen = () => {
     return `${weekday} ${day} ${month} ${year} at ${time}`
   }
 
-// ✅ Only keep threads that actually have at least one real message
-const messageThreads = threads.filter((t) => {
-  const lm = t.lastMessage
-  const text =
-    (typeof lm === "string" && lm) ||
-    lm?.text ||
-    lm?.[0]?.text // handles array form just in case
+  // ✅ Only keep threads that actually have at least one real message
+  const messageThreads = threads.filter((t) => {
+    const lm = t.lastMessage
+    const text =
+      (typeof lm === "string" && lm) ||
+      lm?.text ||
+      lm?.[0]?.text // handles array form just in case
 
-  return !!text && text.trim().length > 0
-})
-
+    return !!text && text.trim().length > 0
+  })
 
   const renderItem = ({ item }) => {
-  const { user: otherUser, lastMessage, updatedAt, id } = item
+    const { user: otherUser, lastMessage, updatedAt, id } = item
 
-  // Last message snippet
- const snippet =
-  (typeof lastMessage === "string" && lastMessage) ||
-  lastMessage?.text ||
-  lastMessage?.[0]?.text ||     // handles array form
-  "No messages yet"
+    const snippet =
+      (typeof lastMessage === "string" && lastMessage) ||
+      lastMessage?.text ||
+      lastMessage?.[0]?.text ||
+      "No messages yet"
 
+    const avatar = otherUser?.profileImage
+    const name = otherUser?.fullName || otherUser?.email
 
+    return (
+      <TouchableOpacity
+        style={styles.threadCard}
+        activeOpacity={0.7}
+        onPress={() =>
+          navigation.navigate("ChatUserScreen", { user: otherUser, threadId: id })
+        }
+      >
+        {avatar ? (
+          <Image source={{ uri: avatar }} style={styles.threadImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.noPicContainer}>
+            <Text style={styles.noPicText}>No{"\n"}Profile{"\n"}Pic</Text>
+          </View>
+        )}
 
-  // ALWAYS show the OTHER USER's identity (your chat partner)
-  const avatar = otherUser?.profileImage
-  const name = otherUser?.fullName || otherUser?.email
+        <View style={styles.threadCenter}>
+          <Text style={styles.threadName} numberOfLines={1}>
+            {name}
+          </Text>
 
-  return (
-    <TouchableOpacity
-      style={styles.threadCard}
-      activeOpacity={0.7}
-      onPress={() =>
-        navigation.navigate("ChatUserScreen", { user: otherUser, threadId: id })
-      }
-    >
-      {avatar ? (
-        <Image source={{ uri: avatar }} style={styles.threadImage} resizeMode="cover" />
-      ) : (
-        <View style={styles.noPicContainer}>
-          <Text style={styles.noPicText}>No{"\n"}Profile{"\n"}Pic</Text>
+          <Text style={styles.threadSnippet} numberOfLines={1}>
+            {snippet}
+          </Text>
         </View>
-      )}
 
-      <View style={styles.threadCenter}>
-        <Text style={styles.threadName} numberOfLines={1}>
-          {name}
-        </Text>
+        <View style={styles.threadRight}>
+          <Text style={styles.threadDate} numberOfLines={2}>
+            {formatTimestamp(updatedAt)}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    )
+  }
 
-        <Text style={styles.threadSnippet} numberOfLines={1}>
-          {snippet}
-        </Text>
-      </View>
-
-      <View style={styles.threadRight}>
-        <Text style={styles.threadDate} numberOfLines={2}>
-          {formatTimestamp(updatedAt)}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  )
-}
-
-
- const keyExtractor = (item) => String(item.id)
-
-
+  const keyExtractor = (item) => String(item.id)
 
   return (
     <View style={styles.container}>
@@ -202,7 +189,6 @@ const messageThreads = threads.filter((t) => {
         </View>
       </View>
 
-      {/* Placeholder when there are no threads with any messages */}
       {loading ? (
         <View style={styles.chatPlaceholder}>
           <Text style={styles.chatPlaceholderText}>Loading…</Text>
@@ -211,7 +197,7 @@ const messageThreads = threads.filter((t) => {
         <View style={styles.chatPlaceholder}>
           <Text style={styles.chatPlaceholderText}>No Chats Yet</Text>
         </View>
-            ) : (
+      ) : (
         <View style={styles.listWrapper}>
           <FlatList
             data={messageThreads}
@@ -222,7 +208,6 @@ const messageThreads = threads.filter((t) => {
           />
         </View>
       )}
-
     </View>
   )
 }

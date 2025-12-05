@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import io from "socket.io-client"
+
 import { useAuth } from "../contexts1/AuthContext"
 import { navigate } from "../contexts1/NavigationService"
 
@@ -32,7 +32,7 @@ import icnUserBlue from "../assets/icn_user_blue.png"
 import icnUserGray from "../assets/icn_user_gray.png"
 import icnWorldGray from "../assets/icn_world_gray.png"
 
-// ✅ Smart API URL (same logic as Chat/ChatUserScreen)
+// ✅ Smart API URL (same as chat screens)
 const getApiUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname
@@ -44,8 +44,6 @@ const getApiUrl = () => {
 }
 
 const API_BASE = getApiUrl()
-const SOCKET_URL = API_BASE
-
 const { height } = Dimensions.get("window")
 const Tab = createBottomTabNavigator()
 
@@ -56,13 +54,11 @@ const BottomTabNavigator = () => {
   const slideAnim = useRef(new Animated.Value(height * 0.4)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
 
-  // all threads for badge calculation
   const [threads, setThreads] = useState([])
+  const [hasUnread, setHasUnread] = useState(false)
 
-  // timestamp of last time user opened the Chat tab
-  const [lastSeenChatAt, setLastSeenChatAt] = useState(() => Date.now())
 
-  // 🔁 Fetch threads for unread badge
+  // 🔁 Fetch threads – SAME PATTERN AS ChatScreen
   const fetchThreads = useCallback(async () => {
     try {
       if (!currentUser?.email) return
@@ -86,58 +82,75 @@ const BottomTabNavigator = () => {
     }
   }, [currentUser?.email])
 
-  useEffect(() => {
-    fetchThreads()
-  }, [fetchThreads])
-
-  // 🔔 Listen for GLOBAL new-message events and refresh threads
+  // Initial fetch + polling every 5s
   useEffect(() => {
     if (!currentUser?.email) return
 
-    const socket = io(SOCKET_URL, { transports: ["websocket"] })
+    fetchThreads()
+    const id = setInterval(fetchThreads, 5000)
 
-    socket.on("message:new-global", () => {
-      fetchThreads()
-    })
-
-    return () => socket.disconnect()
+    return () => clearInterval(id)
   }, [fetchThreads, currentUser?.email])
 
-  // 🧮 Compute unread count: # of DIFFERENT senders
-  // whose last message is from them (not me) AND newer than lastSeenChatAt
-  const unreadSenders = new Set()
+  useEffect(() => {
+  if (typeof window === "undefined") {
+    setHasUnread(false)
+    return
+  }
 
-  threads.forEach((t) => {
+  const meEmail = currentUser?.email?.toLowerCase() || ""
+
+  // If we don’t even know who we are yet, don't show the dot
+  if (!meEmail) {
+    setHasUnread(false)
+    return
+  }
+
+  const flag = threads.some((t) => {
     const lm = t.lastMessage
-    if (!lm) return
+    if (!lm) return false
 
     const text =
       (typeof lm === "string" && lm) ||
       lm?.text ||
       lm?.[0]?.text
 
-    if (!text || !text.trim()) return
+    if (!text || !text.trim()) return false
 
     const senderEmail =
       lm?.sender?.email ||
       lm?.senderEmail ||
       lm?.sender?.senderEmail
 
-    const me = currentUser?.email?.toLowerCase()
     const s = senderEmail?.toLowerCase()
+    // Only treat messages from OTHER people as unread
+    if (!s || s === meEmail) return false
 
-    // only if last msg is from someone else
-    if (!me || !s || s === me) return
+    const readRaw = window.localStorage?.getItem(`threadRead:${t.id}`)
+    const readAt = readRaw ? Number(readRaw) : 0
 
-    // only if last msg is newer than last time user opened Chat
-    const createdAtRaw = lm?.createdAt || (Array.isArray(lm) ? lm[0]?.createdAt : null)
-    const createdAtMs = createdAtRaw ? new Date(createdAtRaw).getTime() : 0
-    if (lastSeenChatAt && createdAtMs <= lastSeenChatAt) return
+    const msgTime = new Date(lm.createdAt || t.updatedAt).getTime()
+    if (!msgTime || Number.isNaN(msgTime)) return false
 
-    unreadSenders.add(s)
+    const isUnread = msgTime > readAt
+
+    // 🔍 Debug log per thread
+    console.log("CHAT BADGE CHECK", {
+      threadId: t.id,
+      text,
+      senderEmail,
+      readAt,
+      msgTime,
+      isUnread,
+    })
+
+    return isUnread
   })
 
-  const unreadCount = unreadSenders.size
+  console.log("CHAT BADGE RESULT:", flag)
+  setHasUnread(flag)
+}, [threads, currentUser?.email])
+
 
   const openModal = () => {
     setModalVisible(true)
@@ -262,50 +275,36 @@ const BottomTabNavigator = () => {
           }}
         />
 
+        {/* CHAT with blue dot */}
         <Tab.Screen
           name="Chat"
           component={ChatScreen}
-          listeners={{
-            tabPress: () => {
-              // when user taps Chat tab, mark everything as "seen"
-              setLastSeenChatAt(Date.now())
-            },
-          }}
           options={{
             tabBarLabel: "",
-            tabBarIcon: ({ focused }) => {
-              const hasUnread = unreadCount > 0
-              const badgeText = unreadCount > 10 ? "10+" : String(unreadCount || "")
-
-              return (
-                <View style={{ alignItems: "center" }}>
-                  <View style={{ position: "relative" }}>
-                    <Image
-                      source={icnChatGray}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        tintColor: focused ? "#007AFF" : "#333",
-                      }}
-                    />
-                    {hasUnread && (
-                      <View style={styles.chatBadge}>
-                        <Text style={styles.chatBadgeText}>{badgeText}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text
+            tabBarIcon: ({ focused }) => (
+              <View style={{ alignItems: "center" }}>
+                <View style={{ position: "relative" }}>
+                  <Image
+                    source={icnChatGray}
                     style={{
-                      fontSize: 12,
-                      color: focused ? "#007AFF" : "#333",
-                      marginTop: 2,
+                      width: 28,
+                      height: 28,
+                      tintColor: focused ? "#007AFF" : "#333",
                     }}
-                  >
-                    Chat
-                  </Text>
+                  />
+                  {hasUnread && <View style={styles.chatDot} />}
                 </View>
-              )
-            },
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: focused ? "#007AFF" : "#333",
+                    marginTop: 2,
+                  }}
+                >
+                  Chat
+                </Text>
+              </View>
+            ),
           }}
         />
 
@@ -346,7 +345,10 @@ const BottomTabNavigator = () => {
       <Modal transparent visible={modalVisible} animationType="none">
         <View style={styles.modalContainer}>
           <Animated.View
-            style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
+            style={[
+              styles.bottomSheet,
+              { transform: [{ translateY: slideAnim }] },
+            ]}
           >
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
               <Text style={styles.closeButtonText}>✕</Text>
@@ -427,21 +429,14 @@ const styles = StyleSheet.create({
     height: 50,
     resizeMode: "contain",
   },
-  chatBadge: {
+  // 🔵 Small blue dot for unread
+  chatDot: {
     position: "absolute",
-    top: -6,
-    right: -12,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 3,
+    top: -2,
+    right: -6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  chatBadgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
   },
 })
