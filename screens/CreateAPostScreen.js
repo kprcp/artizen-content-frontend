@@ -23,6 +23,10 @@ const CreateAPostScreen = ({ navigation }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(null)
 
+  // 🔥 AI engagement prediction state
+const [predictedEngagement, setPredictedEngagement] = useState(null)
+const [isPredicting, setIsPredicting] = useState(false)
+
 
   // 🔥 AGGRESSIVE TITLE SETTING - Same as other screens
   useEffect(() => {
@@ -133,6 +137,52 @@ const CreateAPostScreen = ({ navigation }) => {
     }
   }, [month, year])
 
+  // 🔮 Run AI engagement prediction whenever date changes
+useEffect(() => {
+  const runPrediction = async () => {
+    try {
+      setIsPredicting(true)
+
+      const targetDate = selectedDate || new Date()
+
+      // 👇 turn ".../api/posts" into ".../api"
+      const baseApiUrl = currentApiUrl.replace(/\/posts$/, "")
+
+      const response = await fetch("http://localhost:5001/api/engagement/predict", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    platform: "twitch",
+    timestamp: targetDate.toISOString(),
+  }),
+})
+
+
+      if (!response.ok) {
+        console.log("Prediction response status:", response.status)
+        throw new Error("Prediction API error")
+      }
+
+      const data = await response.json()
+      console.log("Prediction data:", data)
+
+      const level = data.level || data.prediction || null
+      setPredictedEngagement(level)
+    } catch (err) {
+      console.error("Engagement prediction error:", err)
+      setPredictedEngagement(null)
+    } finally {
+      setIsPredicting(false)
+    }
+  }
+
+  runPrediction()
+}, [selectedDate, currentApiUrl])
+
+
+
   const formatDateTime = (date) => {
     if (!date) return "Now"
     const formattedMonth = months[date.getMonth()]
@@ -145,6 +195,21 @@ const CreateAPostScreen = ({ navigation }) => {
     _hour = _hour ? _hour : 12
     return `${formattedMonth} ${_day}, ${_year}, ${_hour}:${_minute} ${_ampm}`
   }
+
+
+  const getEngagementColor = (level) => {
+  if (!level) return "gray"
+
+  const normalized = level.toLowerCase()
+
+  if (normalized === "high" || normalized === "high-medium") return "red"
+  if (normalized === "medium") return "orange"
+  if (normalized === "medium-low") return "green"
+  if (normalized === "low") return "gray"
+
+  return "gray"
+}
+
 
   return (
     <View style={styles.container}>
@@ -254,25 +319,36 @@ const postBody = {
             {isLoading ? "Creating..." : "Post"} {/* ✅ Show loading text */}
           </Text>
         </TouchableOpacity>
-
-        <View style={{ marginTop: 14, alignItems: "center" }}>
-          <Text
-            style={[
-              styles.profileName, // ✅ same font family + weight
-              { fontSize: 16, lineHeight: 22 }, // ✅ override only the size
-            ]}
-          >
-            Predicted Engagement now on Twitch:{" "}
-            <Text
-              style={[
-                styles.profileName, // ✅ same font family + weight
-                { fontSize: 16, lineHeight: 22, color: "red" }, // ✅ same size, red color
-              ]}
-            >
-              High
-            </Text>
-          </Text>
-        </View>
+<View style={{ marginTop: 14, alignItems: "center" }}>
+  <Text
+    style={[
+      styles.profileName,
+      { fontSize: 16, lineHeight: 22 },
+    ]}
+  >
+    Predicted Engagement on Twitch for{" "}
+    <Text style={{ fontWeight: "600" }}>
+      {formatDateTime(selectedDate)}
+    </Text>
+    :{" "}
+    <Text
+      style={[
+        styles.profileName,
+        {
+          fontSize: 16,
+          lineHeight: 22,
+          color: getEngagementColor(predictedEngagement),
+        },
+      ]}
+    >
+      {isPredicting
+        ? "Loading..."
+        : predictedEngagement
+        ? predictedEngagement
+        : "Unknown"}
+    </Text>
+  </Text>
+</View>
 
         {/* ✅ REMOVED: API indicator text */}
       </View>
