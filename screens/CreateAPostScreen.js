@@ -145,23 +145,25 @@ useEffect(() => {
 
       const targetDate = selectedDate || new Date()
 
-      // 👇 turn ".../api/posts" into ".../api"
+      // 🔑 derive base /api URL from currentApiUrl
+      // dev:  http://localhost:5001/api/posts -> http://localhost:5001/api
+      // prod: https://api.artizen.world/api/posts -> https://api.artizen.world/api
       const baseApiUrl = currentApiUrl.replace(/\/posts$/, "")
 
-      const response = await fetch("http://localhost:5001/api/engagement/predict", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    platform: "twitch",
-    timestamp: targetDate.toISOString(),
-  }),
-})
+      const response = await fetch(`${baseApiUrl}/engagement/predict`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          platform: "twitch",
+          timestamp: targetDate.toISOString(),
+        }),
+      })
 
+      console.log("Prediction response status:", response.status)
 
       if (!response.ok) {
-        console.log("Prediction response status:", response.status)
         throw new Error("Prediction API error")
       }
 
